@@ -868,7 +868,7 @@ function renderizarEscala(){
   });
 
   html += `
-    <tr><td colspan="10" class="escala-legenda">Legenda: (D) Diurno 06h00–18h00 | (N) Noturno 18h00–06h00 | (D/N) 06h00–06h00 24h | (A) Folga | (F) Férias | (LP) Licença Prêmio | (EAP) Estágio | <span style="background:var(--verde-14);color:#fff;padding:1px 5px;border-radius:2px;font-size:10px">■ 14º dia / 14D / 14N</span> <span style="background:var(--azul-fruicao);color:#fff;padding:1px 5px;border-radius:2px;font-size:10px;margin-left:4px">■ Fruição de folga</span> | <em>Selecione 14D ou 14N para marcar o 14º dia e reiniciar a contagem</em>
+    <tr><td colspan="10" class="escala-legenda">Legenda: (D) Diurno 06h00–18h00 | (N) Noturno 18h00–06h00 | (D/N) 06h00–06h00 24h | (A) Folga | (F) Férias | (LP) Licença Prêmio | (EAP) Estágio | <span style="background:var(--verde-14);color:#fff;padding:1px 5px;border-radius:2px;font-size:10px">■ 14º dia / 14D / 14N</span> | <em>Selecione 14D ou 14N para marcar o 14º dia e reiniciar a contagem</em>
     </td></tr>
   </table>
 
@@ -926,7 +926,6 @@ function _cellClass(val, polId, diaIdx, sem){
     const info = sem._folgaInfo[polId];
     if(info){
       if(info.dia14 === diaIdx) return 'cell-14';
-      if(info.fruicao === diaIdx) return 'cell-FR';
     }
   }
   return 'cell-'+val.replace('/','');
@@ -982,7 +981,7 @@ function calcularFolgas(){
   db._contFolga = {};
   const atendentes = db.policiais.filter(p=>p.tipo==='ATENDENTE'&&p.ativo);
   atendentes.forEach(pol=>{
-    db._contFolga[pol.id] = {cont:0, aguardando:false, historico:[]};
+    db._contFolga[pol.id] = {cont:0, historico:[]};
   });
   db.semanas.forEach(s=>{ s._folgaInfo=undefined; });
   db.semanas.forEach(s=>calcularFolgasSemana(s));
@@ -996,7 +995,7 @@ function calcularFolgasSemana(sem){
   if(!db._contFolga) db._contFolga = {};
 
   atendentes.forEach(pol=>{
-    if(!db._contFolga[pol.id]) db._contFolga[pol.id] = {cont:0, aguardando:false, historico:[]};
+    if(!db._contFolga[pol.id]) db._contFolga[pol.id] = {cont:0, historico:[]};
     const estado = db._contFolga[pol.id];
 
     if(!sem._folgaInfo) sem._folgaInfo = {};
@@ -1015,23 +1014,14 @@ function calcularFolgasSemana(sem){
       // Verifica se é um ponto de reinício manual (marcação 14)
       const ehPonto14Manual = (marc14[pol.id] === c);
 
-      if(estado.aguardando && val==='D'){
-        sem._folgaInfo[pol.id].fruicao = c;
-        if(!sem.marcacoes[pol.id]) sem.marcacoes[pol.id] = ['A','A','A','A','A','A','A'];
-        sem.marcacoes[pol.id][c] = 'A';
-        estado.aguardando = false;
-        estado.cont = 0;
-        estado.historico.push({data:dataCell.toISOString().split('T')[0],tipo:'FRUIÇÃO'});
-        continue;
-      }
       if(val==='D'||val==='N'){
         estado.cont++;
-        // Marca verde se: chegou automaticamente em 14, OU se o usuário marcou manualmente
+        // Marca verde no 14º dia trabalhado ou quando marcado manualmente
         if(estado.cont===14 || ehPonto14Manual){
           sem._folgaInfo[pol.id].dia14 = c;
-          estado.aguardando = true;
           estado.historico.push({data:dataCell.toISOString().split('T')[0],tipo:'14º DIA'});
           if(ehPonto14Manual) estado.cont = 0; // reinicia contagem a partir deste ponto
+          else estado.cont = 0; // reinicia contagem após o 14º dia
         }
       }
     }
@@ -1048,7 +1038,7 @@ function atualizarFolgaGrid(){
   if(!grid) return;
   let html = '';
   atendentes.forEach(pol=>{
-    const estado = db._contFolga[pol.id]||{cont:0,aguardando:false,historico:[]};
+    const estado = db._contFolga[pol.id]||{cont:0,historico:[]};
     const pct = Math.min(100, Math.round((estado.cont/14)*100));
     const nomeDisplay = pol.nome.split(' ').pop();
     html += `<div class="folga-card">
@@ -1057,8 +1047,8 @@ function atualizarFolgaGrid(){
         <div class="folga-stat"><span class="label">Dias contados</span><span class="val">${estado.cont}</span></div>
         <div class="folga-stat"><span class="label">Meta</span><span class="val">14</span></div>
         <div class="folga-stat"><span class="label">Status</span>
-          <span class="val" style="font-size:11px;color:${estado.aguardando?'var(--azul-fruicao)':'var(--verde-14)'}">
-            ${estado.aguardando?'Aguarda Seg.':'Contando'}
+          <span class="val" style="font-size:11px;color:var(--verde-14)">
+            Contando
           </span>
         </div>
         <div class="folga-bar-wrap"><div class="folga-bar" style="width:${pct}%"></div></div>
@@ -1078,7 +1068,7 @@ function atualizarFolgaGrid(){
         <td style="padding:6px 10px;border-bottom:1px solid var(--cinza-borda)">${pol.nome}</td>
         <td style="padding:6px 10px;border-bottom:1px solid var(--cinza-borda)">${ev.data}</td>
         <td style="padding:6px 10px;border-bottom:1px solid var(--cinza-borda)">
-          <span style="background:${ev.tipo==='14º DIA'?'var(--verde-14)':'var(--azul-fruicao)'};color:#fff;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600">${ev.tipo}</span>
+          <span style="background:${ev.tipo==='14º DIA'?'var(--verde-14)':'var(--verde-14)'};color:#fff;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600">${ev.tipo}</span>
         </td>
       </tr>`;
     });
