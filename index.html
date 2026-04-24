@@ -123,6 +123,7 @@ body{font-family:var(--fonte-corpo);background:var(--cinza-fundo);color:var(--te
 .cell-LP select,.cell-EAP select{background:#fce4ec!important;color:#880e4f!important}
 .cell-14 select{background:var(--verde-14)!important;color:#fff!important}
 .cell-FR select{background:var(--azul-fruicao)!important;color:#fff!important}
+.cell-FA select{background:var(--azul-fruicao)!important;color:#fff!important}
 
 .escala-legenda{font-size:10px;font-style:italic;color:#5a6b7a;padding:5px 8px;background:#fafafa;border-top:1px solid var(--cinza-borda)}
 .bloco-oficiais{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-top:2px solid var(--pm-preto)}
@@ -520,7 +521,7 @@ let db = {
     {id:'id_def_o6',tipo:'OF_PERMANENCIA',nome:'1º Ten PM Aaron',tel:'(16) 98220-9930',ativo:true},
     {id:'id_def_o7',tipo:'OF_PERMANENCIA',nome:'1º Ten PM Viola',tel:'(19) 99508-6176',ativo:true},
   ],
-  statusOpts: ['D','N','A','F','D/N','EAP','LP','14D','14N'],
+  statusOpts: ['D','N','A','FA','F','D/N','EAP','LP','14D','14N'],
   statusDesc: {
     'D':'Diurno 06h00 às 18h00',
     'N':'Noturno 18h00 às 06h00',
@@ -530,7 +531,8 @@ let db = {
     'EAP':'Estágio',
     'LP':'Licença Prêmio',
     '14D':'14º Dia (Diurno) — reinício contagem',
-    '14N':'14º Dia (Noturno) — reinício contagem'
+    '14N':'14º Dia (Noturno) — reinício contagem',
+    'FA' :'Folga Apurada (após 14 dias) — célula azul'
   },
   semanas: [],
   semanaAtual: 0
@@ -744,7 +746,14 @@ function criarSemanaDemo(){
 }
 
 function criarObjSemana(dataInicio, idSobre, idSuperv, idPerm, obs1, obs2, obs3){
-  const atendentes = db.policiais.filter(p=>p.tipo==='ATENDENTE'&&p.ativo);
+  // Inclui atendentes que já têm marcação nesta semana (mesmo inativos)
+  // Novos atendentes = apenas os ativos
+  const atendentesAtivos = db.policiais.filter(p=>p.tipo==='ATENDENTE'&&p.ativo);
+  const idsComMarcacao   = Object.keys(sem.marcacoes||{});
+  const atendentesEscala = db.policiais.filter(p=>
+    p.tipo==='ATENDENTE' && (p.ativo || idsComMarcacao.includes(p.id))
+  );
+  const atendentes = atendentesEscala;
   const marcacoes = {};
   atendentes.forEach(p=>{
     marcacoes[p.id] = ['A','A','A','A','A','A','A'];
@@ -812,7 +821,14 @@ function renderizarEscala(){
 
   const dataBase = new Date(sem.dataInicio+'T00:00:00');
   const dias = Array.from({length:7},(_,i)=>{const d=new Date(dataBase);d.setDate(d.getDate()+i);return d;});
-  const atendentes = db.policiais.filter(p=>p.tipo==='ATENDENTE'&&p.ativo);
+  // Inclui atendentes que já têm marcação nesta semana (mesmo inativos)
+  // Novos atendentes = apenas os ativos
+  const atendentesAtivos = db.policiais.filter(p=>p.tipo==='ATENDENTE'&&p.ativo);
+  const idsComMarcacao   = Object.keys(sem.marcacoes||{});
+  const atendentesEscala = db.policiais.filter(p=>
+    p.tipo==='ATENDENTE' && (p.ativo || idsComMarcacao.includes(p.id))
+  );
+  const atendentes = atendentesEscala;
 
   const ofSobre  = db.policiais.find(p=>p.id===sem.oficSobre)  || {nome:'—',tel:''};
   const ofSuperv = db.policiais.find(p=>p.id===sem.oficSuperv) || {nome:'—',tel:''};
@@ -928,6 +944,7 @@ function _cellClass(val, polId, diaIdx, sem){
       if(info.dia14 === diaIdx) return 'cell-14';
     }
   }
+  if(val==='FA') return 'cell-FA';
   return 'cell-'+val.replace('/','');
 }
 
@@ -979,7 +996,14 @@ function atualizarObs(semId, campo, valor){
 function calcularFolgas(){
   // Recalcula todas as semanas do zero, respeitando marcações manuais de 14º dia
   db._contFolga = {};
-  const atendentes = db.policiais.filter(p=>p.tipo==='ATENDENTE'&&p.ativo);
+  // Inclui atendentes que já têm marcação nesta semana (mesmo inativos)
+  // Novos atendentes = apenas os ativos
+  const atendentesAtivos = db.policiais.filter(p=>p.tipo==='ATENDENTE'&&p.ativo);
+  const idsComMarcacao   = Object.keys(sem.marcacoes||{});
+  const atendentesEscala = db.policiais.filter(p=>
+    p.tipo==='ATENDENTE' && (p.ativo || idsComMarcacao.includes(p.id))
+  );
+  const atendentes = atendentesEscala;
   atendentes.forEach(pol=>{
     db._contFolga[pol.id] = {cont:0, historico:[]};
   });
@@ -991,11 +1015,18 @@ function calcularFolgas(){
 }
 
 function calcularFolgasSemana(sem){
-  const atendentes = db.policiais.filter(p=>p.tipo==='ATENDENTE'&&p.ativo);
+  // Inclui atendentes que já têm marcação nesta semana (mesmo inativos)
+  // Novos atendentes = apenas os ativos
+  const atendentesAtivos = db.policiais.filter(p=>p.tipo==='ATENDENTE'&&p.ativo);
+  const idsComMarcacao   = Object.keys(sem.marcacoes||{});
+  const atendentesEscala = db.policiais.filter(p=>
+    p.tipo==='ATENDENTE' && (p.ativo || idsComMarcacao.includes(p.id))
+  );
+  const atendentes = atendentesEscala;
   if(!db._contFolga) db._contFolga = {};
 
   atendentes.forEach(pol=>{
-    if(!db._contFolga[pol.id]) db._contFolga[pol.id] = {cont:0, historico:[]};
+    if(!db._contFolga[pol.id]) db._contFolga[pol.id] = {cont:0, historico:[], periodos:[]};
     const estado = db._contFolga[pol.id];
 
     if(!sem._folgaInfo) sem._folgaInfo = {};
@@ -1019,9 +1050,12 @@ function calcularFolgasSemana(sem){
         // Marca verde no 14º dia trabalhado ou quando marcado manualmente
         if(estado.cont===14 || ehPonto14Manual){
           sem._folgaInfo[pol.id].dia14 = c;
-          estado.historico.push({data:dataCell.toISOString().split('T')[0],tipo:'14º DIA'});
-          if(ehPonto14Manual) estado.cont = 0; // reinicia contagem a partir deste ponto
-          else estado.cont = 0; // reinicia contagem após o 14º dia
+          var data14 = dataCell.toISOString().split('T')[0];
+          estado.historico.push({data:data14, tipo:'14º DIA'});
+          // Abre novo período aguardando registro de folga
+          if(!estado.periodos) estado.periodos = [];
+          estado.periodos.push({periodo14: data14, semId: sem.id, diaIdx: c, folga: null});
+          estado.cont = 0; // reinicia contagem
         }
       }
     }
@@ -1030,7 +1064,14 @@ function calcularFolgasSemana(sem){
 
 function atualizarFolgaGrid(){
   // Recalcula estado atual de cada policial
-  const atendentes = db.policiais.filter(p=>p.tipo==='ATENDENTE'&&p.ativo);
+  // Inclui atendentes que já têm marcação nesta semana (mesmo inativos)
+  // Novos atendentes = apenas os ativos
+  const atendentesAtivos = db.policiais.filter(p=>p.tipo==='ATENDENTE'&&p.ativo);
+  const idsComMarcacao   = Object.keys(sem.marcacoes||{});
+  const atendentesEscala = db.policiais.filter(p=>
+    p.tipo==='ATENDENTE' && (p.ativo || idsComMarcacao.includes(p.id))
+  );
+  const atendentes = atendentesEscala;
   db._contFolga = {};
   db.semanas.forEach(s=>{ s._folgaInfo=undefined; calcularFolgasSemana(s); });
 
@@ -1057,30 +1098,76 @@ function atualizarFolgaGrid(){
   });
   grid.innerHTML = html || '<div class="empty-state">Nenhum atendente cadastrado.</div>';
 
-  // Histórico
+  // Histórico — períodos de 14 dias com controle de folga
   const hist = document.getElementById('folgaHistorico');
   if(!hist) return;
-  let rows = '';
+
+  // Detecta células FA nas semanas para registrar folga no período
   atendentes.forEach(pol=>{
-    const estado = db._contFolga[pol.id]||{historico:[]};
-    estado.historico.forEach(ev=>{
-      rows += `<tr>
-        <td style="padding:6px 10px;border-bottom:1px solid var(--cinza-borda)">${pol.nome}</td>
-        <td style="padding:6px 10px;border-bottom:1px solid var(--cinza-borda)">${ev.data}</td>
-        <td style="padding:6px 10px;border-bottom:1px solid var(--cinza-borda)">
-          <span style="background:${ev.tipo==='14º DIA'?'var(--verde-14)':'var(--verde-14)'};color:#fff;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600">${ev.tipo}</span>
-        </td>
-      </tr>`;
+    const estado = db._contFolga[pol.id]||{periodos:[]};
+    if(!estado.periodos) estado.periodos = [];
+    estado.periodos.forEach(function(per){
+      if(per.folga) return;
+      db.semanas.forEach(function(sem){
+        const marc = sem.marcacoes && sem.marcacoes[pol.id];
+        if(!marc) return;
+        marc.forEach(function(val, c){
+          if(val === 'FA' && !per.folga){
+            const dBase = new Date(sem.dataInicio+'T00:00:00');
+            const dCell = new Date(dBase);
+            dCell.setDate(dCell.getDate()+c);
+            per.folga = dCell.toISOString().split('T')[0];
+          }
+        });
+      });
     });
   });
+
+  let rows = '';
+  atendentes.forEach(pol=>{
+    const estado = db._contFolga[pol.id]||{periodos:[], historico:[]};
+    const periodos = estado.periodos||[];
+    if(periodos.length === 0){
+      (estado.historico||[]).forEach(ev=>{
+        rows += `<tr>
+          <td style="padding:6px 10px;border-bottom:1px solid var(--cinza-borda)">${pol.nome}</td>
+          <td style="padding:6px 10px;border-bottom:1px solid var(--cinza-borda)">
+            <span style="background:var(--verde-14);color:#fff;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600">Período</span>
+          </td>
+          <td style="padding:6px 10px;border-bottom:1px solid var(--cinza-borda)">${ev.data}</td>
+          <td style="padding:6px 10px;border-bottom:1px solid var(--cinza-borda)">
+            <span style="color:#aaa;font-size:11px;font-style:italic">Marque FA na célula de folga</span>
+          </td>
+        </tr>`;
+      });
+    } else {
+      periodos.forEach(function(per, idx){
+        rows += `<tr>
+          <td style="padding:6px 10px;border-bottom:1px solid var(--cinza-borda)">${pol.nome}</td>
+          <td style="padding:6px 10px;border-bottom:1px solid var(--cinza-borda)">
+            <span style="background:var(--verde-14);color:#fff;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600">Período ${idx+1}</span>
+          </td>
+          <td style="padding:6px 10px;border-bottom:1px solid var(--cinza-borda)">${per.periodo14}</td>
+          <td style="padding:6px 10px;border-bottom:1px solid var(--cinza-borda)">
+            ${per.folga
+              ? `<span style="background:var(--azul-fruicao);color:#fff;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600">✅ ${per.folga}</span>`
+              : `<span style="background:#e8e8e8;color:#555;padding:2px 8px;border-radius:3px;font-size:11px">Pendente — marque FA na escala</span>`
+            }
+          </td>
+        </tr>`;
+      });
+    }
+  });
+
   hist.innerHTML = rows
     ? `<table style="width:100%;border-collapse:collapse;font-size:12px">
         <tr>
           <th style="background:var(--azul-pm);color:#fff;padding:7px 10px;text-align:left">Policial</th>
-          <th style="background:var(--azul-pm);color:#fff;padding:7px 10px;text-align:left">Data</th>
-          <th style="background:var(--azul-pm);color:#fff;padding:7px 10px;text-align:left">Evento</th>
+          <th style="background:var(--azul-pm);color:#fff;padding:7px 10px;text-align:left">Período</th>
+          <th style="background:var(--azul-pm);color:#fff;padding:7px 10px;text-align:left">14º Dia</th>
+          <th style="background:var(--azul-pm);color:#fff;padding:7px 10px;text-align:left">Folga Apurada</th>
         </tr>${rows}</table>`
-    : '<div class="empty-state">Nenhum evento registrado. Clique em Recalcular após preencher as marcações.</div>';
+    : '<div class="empty-state">Nenhum período registrado. Preencha as marcações e clique em Recalcular.</div>';
 }
 
 // ═══════════════════════════════════════════════════════
