@@ -732,6 +732,35 @@ function _registrarListeners(){
 }
 
 // ═══════════════════════════════════════════════════════
+// CRIAÇÃO DE SEMANA
+// ═══════════════════════════════════════════════════════
+function criarSemanaDemo(){
+  const hoje = new Date();
+  const dom = new Date(hoje);
+  dom.setDate(dom.getDate() - dom.getDay());
+  const semana = criarObjSemana(dom,'','','','','','');
+  db.semanas.push(semana);
+  db.semanaAtual = 0;
+}
+
+function criarObjSemana(dataInicio, idSobre, idSuperv, idPerm, obs1, obs2, obs3){
+  const atendentes = db.policiais.filter(p=>p.tipo==='ATENDENTE'&&p.ativo);
+  const marcacoes = {};
+  atendentes.forEach(p=>{
+    marcacoes[p.id] = ['A','A','A','A','A','A','A'];
+  });
+  return {
+    id: 'sem_'+Date.now(),
+    dataInicio: dataInicio instanceof Date ? dataInicio.toISOString().split('T')[0] : dataInicio,
+    oficSobre: idSobre,
+    oficSuperv: idSuperv,
+    oficPerm: idPerm,
+    obs1, obs2, obs3,
+    marcacoes
+  };
+}
+
+// ═══════════════════════════════════════════════════════
 // NAVEGAÇÃO ABAS
 // ═══════════════════════════════════════════════════════
 const TITULOS = {
