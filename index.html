@@ -666,17 +666,70 @@ function _renderizarTudo(){
 // INIT
 // ═══════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', function(){
-  carregarDB();
-  // Se Gist não configurado, renderiza imediatamente do localStorage
-  if(GIST_ID === 'fa7a509cff82337028d6552553e0c011'){
-    if(db.semanas.length === 0){ criarSemanaDemo(); }
-    renderizarEscala();
-    renderizarCronograma();
-    renderizarCadastros();
-    atualizarFolgaGrid();
-  }
-  // Se Gist configurado, o render acontece dentro do callback do fetch
+  // Renderiza imediatamente com cache local
+  _carregarLocal();
+  if(db.semanas.length === 0){ criarSemanaDemo(); }
+  renderizarEscala();
+  renderizarCronograma();
+  renderizarCadastros();
+  atualizarFolgaGrid();
+  // Sincroniza Gist em segundo plano
+  _sincronizarGist();
+  // Registra listeners dos botões
+  _registrarListeners();
 });
+
+function _sincronizarGist(){
+  if(GIST_ID === 'SEU_GIST_ID_AQUI') return;
+  fetch('https://api.github.com/gists/' + GIST_ID, {
+    headers:{
+      'Authorization':'token ' + GIST_TOKEN,
+      'Accept':'application/vnd.github.v3+json'
+    }
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    var c = data.files && data.files[GIST_FILE] && data.files[GIST_FILE].content;
+    if(!c || c==='{}') return;
+    var parsed = JSON.parse(c);
+    _aplicarDados(parsed);
+    try{ localStorage.setItem(DB_KEY, JSON.stringify(db)); }catch(e){}
+    _renderizarTudo();
+  })
+  .catch(function(e){ console.warn('Gist sync:', e); });
+}
+
+function _registrarListeners(){
+  function on(id, fn){ var el=document.getElementById(id); if(el) el.addEventListener('click',fn); }
+  on('da_1',  function(){ fecharModal('modalCadastro'); });
+  on('da_2',  function(){ fecharModal('modalCadastro'); });
+  on('da_3',  function(){ fecharModal('modalStatus'); });
+  on('da_4',  function(){ fecharModal('modalStatus'); });
+  on('da_5',  function(){ adicionarStatus(); });
+  on('da_6',  function(){ fecharModal('modalGerarSemana'); });
+  on('da_7',  function(){ fecharModal('modalGerarSemana'); });
+  on('da_8',  function(){ confirmarGerarSemana(); });
+  on('da_9',  function(){ mostrarAba('escala',this); });
+  on('da_10', function(){ mostrarAba('cronograma',this); });
+  on('da_11', function(){ mostrarAba('folgas',this); });
+  on('da_12', function(){ mostrarAba('cadastros',this); });
+  on('da_13', function(){ abrirModalStatus(); });
+  on('da_14', function(){ abrirModalGerarSemana(); });
+  on('da_15', function(){ imprimirEscala(); });
+  on('da_16', function(){ exportarJSON(); });
+  on('da_17', function(){ importarJSON(); });
+  on('da_18', function(){ navSemana(-1); });
+  on('da_19', function(){ navSemana(1); });
+  on('da_20', function(){ abrirModalGerarSemana(); });
+  on('da_21', function(){ calcularFolgas(); });
+  on('da_22', function(){ calcularFolgas(); });
+  on('da_23', function(){ abrirModalCadastro('ATENDENTE'); });
+  on('da_24', function(){ abrirModalCadastro('OF_SOBREAVISO'); });
+  on('da_25', function(){ abrirModalCadastro('OF_SUPERVISOR'); });
+  on('da_26', function(){ abrirModalCadastro('OF_PERMANENCIA'); });
+  on('btnSalvarCadastro', function(){ salvarCadastro(); });
+  on('confirmBtnNao',     function(){ fecharModal('modalConfirm'); });
+}
 
 // ═══════════════════════════════════════════════════════
 // NAVEGAÇÃO ABAS
