@@ -347,6 +347,41 @@ body{font-family:var(--fonte-corpo);background:var(--cinza-fundo);color:var(--te
   </div>
 </div>
 
+<!-- MODAL RETIFICAR SOBREAVISO -->
+<div class="modal-overlay" id="modalRetificarSobre">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Retificar Escala de Sobreaviso</h3>
+      <button class="btn-close" onclick="fecharModal('modalRetificarSobre')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="retSemId"/>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Oficial Superior de Sobreaviso</label>
+          <select id="retOficSobre"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Oficial Supervisor</label>
+          <select id="retOficSuperv"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Oficial de Permanência</label>
+          <select id="retOficPerm"></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="fecharModal('modalRetificarSobre')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarRetificarSobre()">Salvar Retificação</button>
+    </div>
+  </div>
+</div>
+
 <!-- SHELL -->
 <div class="shell">
 
@@ -904,8 +939,9 @@ function renderizarEscala(){
   </table>
 
   <!-- BLOCO SOBREAVISO -->
-  <div style="border-top:2px solid var(--pm-preto);padding:6px 10px;background:var(--pm-amarelo);color:var(--pm-preto);font-family:var(--fonte-titulo);font-weight:700;font-size:12px;letter-spacing:.4px;text-transform:uppercase;text-align:center">
-    Escala Sobreaviso Semanal — ${periodoStr}
+  <div style="border-top:2px solid var(--pm-preto);padding:6px 10px;background:var(--pm-amarelo);color:var(--pm-preto);font-family:var(--fonte-titulo);font-weight:700;font-size:12px;letter-spacing:.4px;text-transform:uppercase;text-align:center;position:relative">
+    Escala Sobreaviso Semanal — ${fmtDt(dI)} às 08h00 a ${fmtDt(dF)} às 08h00
+    <button onclick="abrirModalRetificarSobre('${sem.id}')" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.2);border:none;color:var(--pm-preto);font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;cursor:pointer;font-family:var(--fonte-corpo);text-transform:none">✎ Retificar</button>
   </div>
   <div class="bloco-oficiais">
     <div class="bloco-of">
@@ -1616,6 +1652,46 @@ function imprimirEscala(){
   setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
   toast('Arquivo gerado! Abra-o no navegador — o diálogo de impressão abrirá automaticamente.','success');
   // Remove spans temporários do clone (não afetou o DOM original)
+}
+
+// ═══════════════════════════════════════════════════════
+// RETIFICAR SOBREAVISO
+// ═══════════════════════════════════════════════════════
+function abrirModalRetificarSobre(semId){
+  document.getElementById('retSemId').value = semId;
+  var sem = null;
+  for(var i=0;i<db.semanas.length;i++){
+    if(db.semanas[i].id===semId){ sem=db.semanas[i]; break; }
+  }
+  _populatSelect('retOficSobre',  'OF_SOBREAVISO');
+  _populatSelect('retOficSuperv', 'OF_SUPERVISOR');
+  _populatSelect('retOficPerm',   'OF_PERMANENCIA');
+  // Pré-seleciona os oficiais atuais
+  if(sem){
+    document.getElementById('retOficSobre').value  = sem.oficSobre  || '';
+    document.getElementById('retOficSuperv').value = sem.oficSuperv || '';
+    document.getElementById('retOficPerm').value   = sem.oficPerm   || '';
+  }
+  abrirModal('modalRetificarSobre');
+}
+
+function confirmarRetificarSobre(){
+  var semId   = document.getElementById('retSemId').value;
+  var idSobre = document.getElementById('retOficSobre').value;
+  var idSuperv= document.getElementById('retOficSuperv').value;
+  var idPerm  = document.getElementById('retOficPerm').value;
+  var sem = null;
+  for(var i=0;i<db.semanas.length;i++){
+    if(db.semanas[i].id===semId){ sem=db.semanas[i]; break; }
+  }
+  if(!sem){ toast('Semana não encontrada.','error'); return; }
+  sem.oficSobre  = idSobre;
+  sem.oficSuperv = idSuperv;
+  sem.oficPerm   = idPerm;
+  salvarDB();
+  fecharModal('modalRetificarSobre');
+  renderizarEscala();
+  toast('Sobreaviso retificado com sucesso!','success');
 }
 
 // ═══════════════════════════════════════════════════════
