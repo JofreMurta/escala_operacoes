@@ -674,22 +674,24 @@ function _renderizarTudo(){
 // INIT
 // ═══════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', function(){
-  // Renderiza imediatamente com cache local
+  // 1. Carrega dados locais imediatamente
   _carregarLocal();
-  // Inicializa _contFolga antes de qualquer render
+
+  // 2. Inicializa _contFolga
   if(!db._contFolga) db._contFolga = {};
   db.policiais.filter(p=>p.tipo==='ATENDENTE'&&p.ativo).forEach(function(pol){
     if(!db._contFolga[pol.id]) db._contFolga[pol.id] = {cont:0, historico:[], periodos:[]};
   });
+
+  // 3. Renderiza com dados locais
   if(db.semanas.length === 0){ criarSemanaDemo(); }
   renderizarEscala();
   renderizarCronograma();
   renderizarCadastros();
   atualizarFolgaGrid();
-  // Sincroniza Gist em segundo plano
-  _sincronizarGist();
-  // Registra listeners dos botões
-  _registrarListeners();
+
+  // 4. Sincroniza Gist em segundo plano (só atualiza se Gist tiver dados mais recentes)
+  setTimeout(function(){ _sincronizarGist(); }, 1000);
 });
 
 function _sincronizarGist(){
@@ -715,6 +717,8 @@ function _sincronizarGist(){
     var c = data.files && data.files[GIST_FILE] && data.files[GIST_FILE].content;
     if(!c || c==='{}') return;
     var parsed = JSON.parse(c);
+    // Só aplica se o Gist tiver dados reais (não sobrescreve dados locais)
+    if(!parsed.semanas || parsed.semanas.length === 0) return;
     _aplicarDados(parsed);
     try{ localStorage.setItem(DB_KEY, JSON.stringify(db)); }catch(e){}
     _renderizarTudo();
