@@ -936,7 +936,7 @@ function renderizarEscala(){
   });
 
   html += `
-    <tr><td colspan="10" class="escala-legenda">Legenda: (D) Diurno 06h00–18h00 | (N) Noturno 18h00–06h00 | (D/N) 06h00–06h00 24h | (A) Folga | (F) Férias | (LP) Licença Prêmio | (EAP) Estágio | <span style="background:var(--verde-14);color:#fff;padding:1px 5px;border-radius:2px;font-size:10px">■ 14º dia / 14D / 14N</span> | <em>Selecione 14D ou 14N para marcar o 14º dia e reiniciar a contagem</em>
+    <tr><td colspan="10" class="escala-legenda">Legenda: (D) Diurno 06h00–18h00 | (N) Noturno 18h00–06h00 | (D/N) 06h00–06h00 24h | (A) Folga | (F) Férias | (LP) Licença Prêmio | (EAP) Estágio | <span style="background:var(--verde-14);color:#fff;padding:1px 5px;border-radius:2px;font-size:10px">■ 14º dia / 14D / 14N</span> | <em>Selecione 14D ou 14N para marcar manualmente o 14º dia</em>
     </td></tr>
   </table>
 
@@ -1099,30 +1099,24 @@ function calcularFolgasSemana(sem){
     if(!sem._folgaInfo) sem._folgaInfo = {};
     sem._folgaInfo[pol.id] = {};
 
-    const marc = sem.marcacoes[pol.id] || [];
-    const marc14 = sem.marcacoes14 || {};
+    const marc    = sem.marcacoes[pol.id] || [];
+    const marc14  = sem.marcacoes14 || {};
     const dataBase = new Date(sem.dataInicio+'T00:00:00');
 
     for(let c=0;c<7;c++){
       const valRaw = (marc[c]||'A').toUpperCase();
-      // Normaliza: 14D/14N são tratados como D/N mas sinalizam reinício
-      const val = valRaw === '14D' ? 'D' : valRaw === '14N' ? 'N' : valRaw;
       const dataCell = new Date(dataBase); dataCell.setDate(dataCell.getDate()+c);
 
-      // Verifica se é um ponto de reinício manual (marcação 14)
-      const ehPonto14Manual = (marc14[pol.id] === c);
-
-      if(val==='D'||val==='N'){
-        estado.cont++;
-        // Marca verde no 14º dia trabalhado ou quando marcado manualmente
-        if(estado.cont===14 || ehPonto14Manual){
-          sem._folgaInfo[pol.id].dia14 = c;
-          var data14 = dataCell.toISOString().split('T')[0];
-          estado.historico.push({data:data14, tipo:'14º DIA'});
-          // Abre novo período aguardando registro de folga
+      // Marca verde SOMENTE quando o usuário seleciona 14D ou 14N manualmente
+      if(valRaw === '14D' || valRaw === '14N'){
+        sem._folgaInfo[pol.id].dia14 = c;
+        var data14 = dataCell.toISOString().split('T')[0];
+        // Registra no histórico apenas se ainda não registrado nesta semana
+        var jaRegistrado = estado.historico.some(function(h){ return h.data === data14; });
+        if(!jaRegistrado){
+          estado.historico.push({data: data14, tipo:'14º DIA'});
           if(!estado.periodos) estado.periodos = [];
           estado.periodos.push({periodo14: data14, semId: sem.id, diaIdx: c, folga: null});
-          estado.cont = 0; // reinicia contagem
         }
       }
     }
