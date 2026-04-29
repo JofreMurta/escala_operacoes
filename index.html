@@ -414,6 +414,9 @@ body{font-family:var(--fonte-corpo);background:var(--cinza-fundo);color:var(--te
       <button class="sb-btn" onclick="abrirModalStatus()">
         <span class="ic">🏷</span> Status / Legenda
       </button>
+      <button class="sb-btn" onclick="mostrarAba('frequencia',this)">
+        <span class="ic">📋</span> Controle de Frequência
+      </button>
       <div class="sb-section">Ações</div>
       <button class="sb-btn" onclick="abrirModalGerarSemana()">
         <span class="ic">➕</span> Nova Semana
@@ -526,6 +529,28 @@ body{font-family:var(--fonte-corpo);background:var(--cinza-fundo);color:var(--te
             </div>
             <div class="card-body" id="listaOficiais"></div>
           </div>
+        </div>
+      </div>
+
+      <!-- ABA: CONTROLE DE FREQUÊNCIA -->
+      <div id="aba-frequencia" style="display:none">
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header">
+            <h2>Controle de Frequência</h2>
+            <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+              <select id="freqMes" onchange="renderizarFrequencia()" style="padding:5px 8px;border:1px solid var(--cinza-borda);border-radius:4px;font-size:13px">
+                <option value="0">Janeiro</option><option value="1">Fevereiro</option>
+                <option value="2">Março</option><option value="3">Abril</option>
+                <option value="4">Maio</option><option value="5">Junho</option>
+                <option value="6">Julho</option><option value="7">Agosto</option>
+                <option value="8">Setembro</option><option value="9">Outubro</option>
+                <option value="10">Novembro</option><option value="11">Dezembro</option>
+              </select>
+              <select id="freqAno" onchange="renderizarFrequencia()" style="padding:5px 8px;border:1px solid var(--cinza-borda);border-radius:4px;font-size:13px"></select>
+              <button class="btn btn-primary btn-sm" onclick="exportarFrequenciaPDF()">🖨 Exportar PDF</button>
+            </div>
+          </div>
+          <div class="card-body" id="freqContainer"></div>
         </div>
       </div>
 
@@ -829,7 +854,8 @@ const TITULOS = {
   escala:'Escala Semanal',
   cronograma:'Cronograma de Oficiais',
   folgas:'Controle de Folgas',
-  cadastros:'Cadastros'
+  cadastros:'Cadastros',
+  frequencia:'Controle de Frequência'
 };
 function mostrarAba(id, btn){
   document.querySelectorAll('[id^="aba-"]').forEach(el=>el.style.display='none');
@@ -840,6 +866,7 @@ function mostrarAba(id, btn){
   if(id==='folgas') atualizarFolgaGrid();
   if(id==='cadastros') renderizarCadastros();
   if(id==='cronograma') renderizarCronograma();
+  if(id==='frequencia'){ _initFreqSelects(); renderizarFrequencia(); }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1735,6 +1762,278 @@ function fecharModal(id){
 document.addEventListener('click', e=>{
   if(e.target.classList.contains('modal-overlay')) fecharModal(e.target.id);
 });
+
+
+// ═══════════════════════════════════════════════════════
+// CONTROLE DE FREQUÊNCIA
+// ═══════════════════════════════════════════════════════
+var MESES_NOME = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                  'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function _initFreqSelects(){
+  var hoje  = new Date();
+  var anoEl = document.getElementById('freqAno');
+  var mesEl = document.getElementById('freqMes');
+  if(!anoEl || !mesEl) return;
+  // Popula anos (2024 até ano atual+1)
+  if(anoEl.options.length === 0){
+    for(var a = 2024; a <= hoje.getFullYear()+1; a++){
+      var op = document.createElement('option');
+      op.value = a; op.textContent = a;
+      anoEl.appendChild(op);
+    }
+  }
+  anoEl.value = hoje.getFullYear();
+  mesEl.value = hoje.getMonth();
+}
+
+function renderizarFrequencia(){
+  var mesEl = document.getElementById('freqMes');
+  var anoEl = document.getElementById('freqAno');
+  if(!mesEl || !anoEl) return;
+  var mes = parseInt(mesEl.value);
+  var ano = parseInt(anoEl.value);
+  var container = document.getElementById('freqContainer');
+  if(!container) return;
+
+  // Dias do mês
+  var diasNoMes = new Date(ano, mes+1, 0).getDate();
+
+  // Atendentes ativos
+  var atendentes = db.policiais.filter(function(p){ return p.tipo==='ATENDENTE' && p.ativo; });
+
+  // Monta mapa: polId → {dia: marcacao} para o mês/ano selecionado
+  var mapaMarcacoes = {};
+  atendentes.forEach(function(pol){
+    mapaMarcacoes[pol.id] = {};
+  });
+
+  db.semanas.forEach(function(sem){
+    var dataBase = new Date(sem.dataInicio+'T00:00:00');
+    for(var c=0; c<7; c++){
+      var dataCell = new Date(dataBase);
+      dataCell.setDate(dataCell.getDate()+c);
+      if(dataCell.getMonth() !== mes || dataCell.getFullYear() !== ano) continue;
+      var dia = dataCell.getDate();
+      atendentes.forEach(function(pol){
+        var marc = sem.marcacoes && sem.marcacoes[pol.id];
+        if(marc && marc[c]){
+          mapaMarcacoes[pol.id][dia] = marc[c].toUpperCase();
+        }
+      });
+    }
+  });
+
+  // Oficial de sobreaviso do mês (pega o da última semana do mês)
+  var ofSobreNome = '—';
+  db.semanas.forEach(function(sem){
+    var d = new Date(sem.dataInicio+'T00:00:00');
+    if(d.getMonth()===mes && d.getFullYear()===ano && sem.oficSobre){
+      var of = db.policiais.find(function(p){ return p.id===sem.oficSobre; });
+      if(of) ofSobreNome = of.nome;
+    }
+  });
+
+  // Função de valor da marcação
+  function valorMarcacao(marc){
+    if(!marc || marc==='A' || marc==='F' || marc==='LP' || marc==='EAP' || marc==='FA') return {meiDA:0, diasTrab:0, cod:marc||''};
+    if(marc==='D' || marc==='N' || marc==='14D' || marc==='14N') return {meiDA:2, diasTrab:1, cod:marc};
+    if(marc==='D/N') return {meiDA:3, diasTrab:1, cod:marc};
+    return {meiDA:0, diasTrab:0, cod:marc};
+  }
+
+  // Monta cabeçalho de dias (dividido em 2 linhas: 1-16 e 17-31)
+  function gerarCabecalhoDias(de, ate){
+    var h = '';
+    for(var d=de; d<=ate && d<=diasNoMes; d++){
+      h += '<th style="width:22px;text-align:center;font-size:9px;padding:2px 1px;background:var(--azul-pm);color:#fff;border:1px solid #ccc">'+d+'</th>';
+    }
+    return h;
+  }
+
+  // Monta células de dias para um policial
+  function gerarCelulasDias(pol, de, ate){
+    var cells = '';
+    for(var d=de; d<=ate && d<=diasNoMes; d++){
+      var marc = mapaMarcacoes[pol.id][d] || '';
+      var val  = valorMarcacao(marc);
+      var bg   = '';
+      if(marc==='D'||marc==='14D') bg='background:#e8f5e9;color:#1b5e20';
+      else if(marc==='N'||marc==='14N') bg='background:#e8eaf6;color:#1a237e';
+      else if(marc==='D/N') bg='background:#fff3e0;color:#e65100';
+      else if(marc==='FA') bg='background:#e3f2fd;color:#0d47a1';
+      else if(marc==='F') bg='background:#fce4ec;color:#880e4f';
+      else if(marc==='LP') bg='background:#f3e5f5;color:#4a148c';
+      else if(marc==='EAP') bg='background:#e0f2f1;color:#004d40';
+      cells += '<td style="text-align:center;font-size:9px;padding:1px;border:1px solid #ddd;'+bg+'">'+
+               (val.meiDA > 0 ? val.meiDA : (marc||''))+'</td>';
+    }
+    // preenche dias restantes do bloco com vazio
+    for(var d2=(ate<diasNoMes?ate:diasNoMes)+1; d2<=ate; d2++){
+      cells += '<td style="border:1px solid #ddd;background:#f9f9f9"></td>';
+    }
+    return cells;
+  }
+
+  // Calcula totais
+  function calcularTotais(pol){
+    var meiDA=0, diasTrab=0;
+    for(var d=1; d<=diasNoMes; d++){
+      var marc = mapaMarcacoes[pol.id][d] || '';
+      var val  = valorMarcacao(marc);
+      meiDA    += val.meiDA;
+      diasTrab += val.diasTrab;
+    }
+    return {meiDA:meiDA, diasTrab:diasTrab};
+  }
+
+  // Renderiza tabela
+  var linhasAtend = '';
+  atendentes.forEach(function(pol, idx){
+    var totais = calcularTotais(pol);
+    var partes = pol.nome.split(' ');
+    var grad = partes[0] + ' ' + (partes[1]||'');
+    var re   = partes[2]||'';
+    var nome = partes.slice(3).join(' ');
+    linhasAtend += '<tr>'+
+      '<td style="text-align:center;font-size:10px;padding:3px;border:1px solid #ccc;font-weight:700">'+(idx+1)+'</td>'+
+      '<td style="font-size:9px;padding:3px;border:1px solid #ccc;white-space:nowrap">'+grad+'</td>'+
+      '<td style="font-size:9px;padding:3px;border:1px solid #ccc;text-align:center">'+re+'</td>'+
+      '<td style="font-size:10px;padding:3px;border:1px solid #ccc;white-space:nowrap">'+nome+'</td>'+
+      gerarCelulasDias(pol,1,15)+
+      '<td style="text-align:center;font-weight:700;font-size:10px;padding:3px;border:1px solid #ccc;background:#FFF0A0">'+totais.meiDA+'</td>'+
+      '<td style="text-align:center;font-weight:700;font-size:10px;padding:3px;border:1px solid #ccc;background:#FFF0A0">'+totais.diasTrab+'</td>'+
+      '</tr>';
+  });
+
+  var linhasAtend2 = '';
+  atendentes.forEach(function(pol, idx){
+    var totais = calcularTotais(pol);
+    var partes = pol.nome.split(' ');
+    var grad = partes[0] + ' ' + (partes[1]||'');
+    var re   = partes[2]||'';
+    var nome = partes.slice(3).join(' ');
+    linhasAtend2 += '<tr>'+
+      '<td style="text-align:center;font-size:10px;padding:3px;border:1px solid #ccc;font-weight:700">'+(idx+1)+'</td>'+
+      '<td style="font-size:9px;padding:3px;border:1px solid #ccc;white-space:nowrap">'+grad+'</td>'+
+      '<td style="font-size:9px;padding:3px;border:1px solid #ccc;text-align:center">'+re+'</td>'+
+      '<td style="font-size:10px;padding:3px;border:1px solid #ccc;white-space:nowrap">'+nome+'</td>'+
+      gerarCelulasDias(pol,16,diasNoMes)+
+      '<td style="text-align:center;font-weight:700;font-size:10px;padding:3px;border:1px solid #ccc;background:#FFF0A0">'+totais.meiDA+'</td>'+
+      '<td style="text-align:center;font-weight:700;font-size:10px;padding:3px;border:1px solid #ccc;background:#FFF0A0">'+totais.diasTrab+'</td>'+
+      '</tr>';
+  });
+
+  var cabDias1 = gerarCabecalhoDias(1,15);
+  var cabDias2 = gerarCabecalhoDias(16,diasNoMes);
+  var cabComum = '<th style="width:24px;text-align:center;font-size:9px;padding:2px;background:var(--azul-pm);color:#fff;border:1px solid #ccc">#</th>'+
+                 '<th style="font-size:9px;padding:2px;background:var(--azul-pm);color:#fff;border:1px solid #ccc">Posto/Grad</th>'+
+                 '<th style="font-size:9px;padding:2px;background:var(--azul-pm);color:#fff;border:1px solid #ccc">RE</th>'+
+                 '<th style="font-size:9px;padding:2px;background:var(--azul-pm);color:#fff;border:1px solid #ccc">Nome</th>';
+  var cabTotal = '<th style="font-size:9px;padding:2px;background:var(--pm-amarelo);color:var(--pm-preto);border:1px solid #ccc">½ DA</th>'+
+                 '<th style="font-size:9px;padding:2px;background:var(--pm-amarelo);color:var(--pm-preto);border:1px solid #ccc">Dias<br/>Trab</th>';
+
+  var cabInst = '<div style="background:var(--pm-amarelo);padding:8px 12px;border:2px solid var(--pm-preto);margin-bottom:4px">'+
+    '<div style="display:grid;grid-template-columns:1fr 2fr 1fr 1fr;gap:8px;align-items:center">'+
+    '<div style="font-size:10px;font-weight:700">POLÍCIA MILITAR<br/>DO ESTADO DE SÃO PAULO</div>'+
+    '<div style="text-align:center;font-size:11px;font-weight:700">CONTROLE DE FREQUÊNCIA<br/>'+
+    '<span style="font-size:10px;font-weight:400">OPM: 3º BPRV | Cód: 620030000</span></div>'+
+    '<div style="text-align:center;font-size:11px;font-weight:700">MÊS: '+MESES_NOME[mes].toUpperCase()+'<br/>ANO: '+ano+'</div>'+
+    '<div style="text-align:center;font-size:10px">Pág. 1 / 2</div>'+
+    '</div></div>';
+
+  var cabInst2 = cabInst.replace('Pág. 1 / 2','Pág. 2 / 2');
+
+  var legenda = '<div style="font-size:9px;padding:4px 8px;background:#f9f9f9;border:1px solid #ddd;margin-top:4px">'+
+    '<strong>Legenda:</strong> '+
+    '<span style="margin:0 4px"><strong>D, N ou D/N</strong> = Dias trabalhados &nbsp;|&nbsp; <strong>½ DA:</strong> D ou N = 2 &nbsp;|&nbsp; D/N = 3 &nbsp;|&nbsp; Diferente de D, N ou D/N = valor <strong>zero</strong>, não soma.</span>'+
+    '</div>';
+
+  var rodape = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:16px;font-size:10px;text-align:center">'+
+    '<div>'+
+      '<div style="font-size:9px;color:#888;margin-bottom:2px">ELABORADOR</div>'+
+      '<input id="freqElab" type="text" style="width:100%;border:none;border-bottom:1px solid #000;text-align:center;font-size:10px;padding:2px;outline:none" placeholder="Nome / Posto"/>'+
+    '</div>'+
+    '<div>'+
+      '<div style="font-size:9px;color:#888;margin-bottom:2px">CONFERÊNCIA</div>'+
+      '<input id="freqConf" type="text" style="width:100%;border:none;border-bottom:1px solid #000;text-align:center;font-size:10px;padding:2px;outline:none" value="'+ofSobreNome+'" placeholder="Oficial de Sobreaviso"/>'+
+    '</div>'+
+    '<div>'+
+      '<div style="font-size:9px;color:#888;margin-bottom:2px">DIRETOR / CMT / CHEFE</div>'+
+      '<input id="freqDir" type="text" style="width:100%;border:none;border-bottom:1px solid #000;text-align:center;font-size:10px;padding:2px;outline:none" placeholder="Nome / Posto"/>'+
+    '</div>'+
+    '</div>';
+
+  var html1 = cabInst+
+    '<table style="width:100%;border-collapse:collapse;font-size:10px">'+
+    '<thead><tr>'+cabComum+cabDias1+cabTotal+'</tr></thead>'+
+    '<tbody>'+linhasAtend+'</tbody></table>'+
+    legenda;
+
+  var html2 = '<hr style="margin:20px 0;border:2px dashed #ccc"/>'+
+    cabInst2+
+    '<table style="width:100%;border-collapse:collapse;font-size:10px">'+
+    '<thead><tr>'+cabComum+cabDias2+cabTotal+'</tr></thead>'+
+    '<tbody>'+linhasAtend2+'</tbody></table>'+
+    legenda+rodape;
+
+  container.innerHTML = html1 + html2;
+}
+
+function exportarFrequenciaPDF(){
+  var mesEl = document.getElementById('freqMes');
+  var anoEl = document.getElementById('freqAno');
+  if(!mesEl || !anoEl) return;
+  var mes  = parseInt(mesEl.value);
+  var ano  = parseInt(anoEl.value);
+  var cont = document.getElementById('freqContainer');
+  if(!cont || !cont.innerHTML.trim()){ toast('Gere o controle antes de exportar.','error'); return; }
+
+  // Captura os valores digitados nos campos do rodapé
+  var elab = document.getElementById('freqElab') ? document.getElementById('freqElab').value : '';
+  var conf = document.getElementById('freqConf') ? document.getElementById('freqConf').value : '';
+  var dir  = document.getElementById('freqDir')  ? document.getElementById('freqDir').value  : '';
+
+  // Clona o conteúdo e substitui os inputs pelos valores para impressão
+  var contClone = cont.cloneNode(true);
+  contClone.querySelectorAll('input').forEach(function(inp){
+    var span = document.createElement('span');
+    span.textContent = inp.value || '';
+    span.style.cssText = 'display:block;font-weight:700;font-size:10px;text-align:center;border-bottom:1px solid #000;padding:2px';
+    inp.parentNode.replaceChild(span, inp);
+  });
+  var conteudo = contClone.innerHTML;
+
+  var css = [
+    'body{font-family:Arial,sans-serif;font-size:10px;margin:8mm}',
+    'table{border-collapse:collapse;width:100%}',
+    'th,td{border:1px solid #ccc;padding:2px 3px}',
+    '@page{size:A4 landscape;margin:8mm}',
+    '@media print{body{margin:0}}'
+  ].join('');
+
+  var docHTML = [
+    '<'+'!DOCTYPE html><'+'html><'+'head>',
+    '<meta charset="UTF-8"/>',
+    '<title>Controle de Frequência — '+MESES_NOME[mes]+' '+ano+'<'+'/title>',
+    '<style>'+css+'<'+'/style>',
+    '<'+'/head><'+'body>',
+    conteudo,
+    '<script>window.onload=function(){window.print()};<'+'/script>',
+    '<'+'/body><'+'/html>'
+  ].join('');
+
+  var blob = new Blob([docHTML], {type:'text/html;charset=utf-8'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url;
+  a.download = 'FreqControl_'+MESES_NOME[mes]+'_'+ano+'.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+  toast('Arquivo gerado! Abra no navegador e use Ctrl+P para imprimir/salvar PDF.','success');
+}
 
 // ═══════════════════════════════════════════════════════
 // TOAST
