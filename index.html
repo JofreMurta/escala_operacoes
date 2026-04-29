@@ -1642,6 +1642,9 @@ function imprimirEscala(){
     '*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}',
     'body{font-family:Arial,sans-serif;font-size:10px;color:#111;background:#fff;padding:4px}',
     'table{border-collapse:collapse;width:100%}',
+    'th,td{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}',
+    '.freq-d{background:#e8f5e9!important;color:#1b5e20!important}',
+    '.freq-n{background:#e8eaf6!important;color:#1a237e!important}',
     'th,td{border:1px solid #bbb;padding:0}',
     '.escala-head-inst{background:#F5C400!important;color:#111!important;text-align:center!important;font-weight:700;padding:4px 6px;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}',
     '.escala-head-col{background:#111!important;color:#F5C400!important;text-align:center!important;font-weight:700;font-size:9px;padding:4px 2px;white-space:nowrap;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}',
@@ -1845,8 +1848,13 @@ function renderizarFrequencia(){
   // Monta cabeçalho de dias (dividido em 2 linhas: 1-16 e 17-31)
   function gerarCabecalhoDias(de, ate){
     var h = '';
-    for(var d=de; d<=ate && d<=diasNoMes; d++){
-      h += '<th style="width:22px;text-align:center;font-size:9px;padding:2px 1px;background:var(--azul-pm);color:#fff;border:1px solid #ccc">'+d+'</th>';
+    for(var d=de; d<=ate; d++){
+      if(d <= diasNoMes){
+        h += '<th style="width:22px;text-align:center;font-size:9px;padding:2px 1px;background:#1a3a5c;color:#fff;border:1px solid #ccc">'+d+'</th>';
+      } else {
+        // Dias além do mês — cabeçalho cinza
+        h += '<th style="width:22px;text-align:center;font-size:9px;padding:2px 1px;background:#cccccc;color:#999;border:1px solid #ccc">'+d+'</th>';
+      }
     }
     return h;
   }
@@ -1858,19 +1866,27 @@ function renderizarFrequencia(){
       var marc = mapaMarcacoes[pol.id][d] || '';
       var val  = valorMarcacao(marc);
       var bg   = '';
-      if(marc==='D'||marc==='14D') bg='background:#e8f5e9;color:#1b5e20';
-      else if(marc==='N'||marc==='14N') bg='background:#e8eaf6;color:#1a237e';
-      else if(marc==='D/N') bg='background:#fff3e0;color:#e65100';
-      else if(marc==='FA') bg='background:#e3f2fd;color:#0d47a1';
-      else if(marc==='F') bg='background:#fce4ec;color:#880e4f';
-      else if(marc==='LP') bg='background:#f3e5f5;color:#4a148c';
-      else if(marc==='EAP') bg='background:#e0f2f1;color:#004d40';
-      cells += '<td style="text-align:center;font-size:9px;padding:1px;border:1px solid #ddd;'+bg+'">'+
-               (val.meiDA > 0 ? val.meiDA : (marc||''))+'</td>';
+      var txt  = '';
+      if(marc==='D'||marc==='14D'){
+        bg  = 'background:#e8f5e9;color:#1b5e20;font-weight:700';
+        txt = String(val.meiDA); // '2'
+      } else if(marc==='N'||marc==='14N'){
+        bg  = 'background:#e8eaf6;color:#1a237e;font-weight:700';
+        txt = String(val.meiDA); // '2'
+      } else if(marc==='D/N'){
+        bg  = 'background:#fff3e0;color:#e65100;font-weight:700';
+        txt = String(val.meiDA); // '3'
+      } else if(marc !== ''){
+        // FA, F, LP, EAP, A — exibe 0
+        bg  = 'background:#f5f5f5;color:#999';
+        txt = '0';
+      }
+      // Se marc === '' (sem marcação) — célula vazia
+      cells += '<td style="text-align:center;font-size:9px;padding:1px;border:1px solid #ddd;'+bg+'">'+txt+'</td>';
     }
-    // preenche dias restantes do bloco com vazio
-    for(var d2=(ate<diasNoMes?ate:diasNoMes)+1; d2<=ate; d2++){
-      cells += '<td style="border:1px solid #ddd;background:#f9f9f9"></td>';
+    // Preenche dias além do fim do mês com traço
+    for(var d2=Math.min(ate,diasNoMes)+1; d2<=ate; d2++){
+      cells += '<td style="border:1px solid #ddd;background:#eeeeee;text-align:center;font-size:9px;color:#bbb">—</td>';
     }
     return cells;
   }
@@ -2021,6 +2037,9 @@ function exportarFrequenciaPDF(){
   var css = [
     'body{font-family:Arial,sans-serif;font-size:10px;margin:8mm}',
     'table{border-collapse:collapse;width:100%}',
+    'th,td{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}',
+    '.freq-d{background:#e8f5e9!important;color:#1b5e20!important}',
+    '.freq-n{background:#e8eaf6!important;color:#1a237e!important}',
     'th,td{border:1px solid #ccc;padding:2px 3px}',
     '@page{size:A4 landscape;margin:8mm}',
     '@media print{body{margin:0}}'
