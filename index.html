@@ -1753,10 +1753,6 @@ function imprimirEscala(){
 function abrirModalRetificarPeriodo(){
   if(db.semanas.length === 0){ toast('Nenhuma semana cadastrada.','error'); return; }
   var sem = db.semanas[db.semanaAtual];
-  if(_semBloqueada(sem)){
-    toast('Mês encerrado — esta escala não pode mais ser alterada.','error');
-    return;
-  }
   document.getElementById('retPerSemId').value   = sem.id;
   document.getElementById('retPerAtual').value   = nomeSemana(sem.dataInicio);
   document.getElementById('retPerNovaData').value = sem.dataInicio;
