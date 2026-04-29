@@ -32,7 +32,7 @@
 body{font-family:var(--fonte-corpo);background:var(--cinza-fundo);color:var(--texto-esc);font-size:14px}
 
 .shell{display:flex;min-height:100vh}
-.sidebar{width:240px;min-width:240px;background:var(--pm-amarelo);color:var(--pm-preto);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar{width:240px;min-width:240px;background:#F5C400!important;color:#111;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
 .main{flex:1;overflow:hidden;display:flex;flex-direction:column}
 
 /* ── SIDEBAR ── */
@@ -51,7 +51,7 @@ body{font-family:var(--fonte-corpo);background:var(--cinza-fundo);color:var(--te
 .topbar{background:var(--branco);border-bottom:1px solid var(--cinza-borda);padding:0 24px;height:52px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
 .topbar h1{font-family:var(--fonte-titulo);font-size:18px;font-weight:700;color:var(--azul-pm);letter-spacing:.3px}
 .topbar .breadcrumb{font-size:12px;color:#7a8a9a;margin-left:auto;display:flex;align-items:center;gap:6px}
-.topbar .tag-regime{background:var(--pm-amarelo);color:var(--pm-preto);font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:.4px}
+.topbar .tag-regime{background:#F5C400!important;color:#111;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:.4px}
 
 /* ── CONTENT ── */
 .content{padding:12px 14px;flex:1;overflow-y:auto}
@@ -106,7 +106,7 @@ body{font-family:var(--fonte-corpo);background:var(--cinza-fundo);color:var(--te
 .escala-wrap{overflow-x:auto;margin-bottom:20px}
 .escala-table{border-collapse:collapse;width:100%;font-size:12px;table-layout:auto}
 .escala-table th,.escala-table td{border:1px solid var(--cinza-borda);padding:0}
-.escala-head-inst{background:var(--pm-amarelo);color:var(--pm-preto);text-align:center;font-family:var(--fonte-titulo);font-weight:700;font-size:13px;letter-spacing:.3px;padding:5px 8px}
+.escala-head-inst{background:#F5C400!important;color:#111;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;text-align:center;font-family:var(--fonte-titulo);font-weight:700;font-size:13px;letter-spacing:.3px;padding:5px 8px}
 .escala-head-col{background:var(--pm-preto);color:var(--pm-amarelo);text-align:center;font-weight:700;font-size:11px;padding:6px 4px;white-space:nowrap}
 .escala-head-num{text-align:center;font-weight:700;font-size:12px;padding:3px}
 .escala-head-col.escala-fds{background:#444!important;color:var(--pm-amarelo)!important}
@@ -134,7 +134,7 @@ body{font-family:var(--fonte-corpo);background:var(--cinza-fundo);color:var(--te
 .bloco-of-tel{font-size:11px;color:#7a8a9a;margin-top:2px;text-align:center}
 .bloco-cias{padding:8px 12px;background:var(--pm-amarelo-claro);border-top:1px solid var(--cinza-borda);font-size:11px;color:var(--pm-preto);font-style:italic;text-align:center}
 .bloco-obs{border-top:2px solid var(--pm-preto)}
-.obs-titulo{background:var(--pm-amarelo);color:var(--pm-preto);font-family:var(--fonte-titulo);font-weight:700;font-size:12px;letter-spacing:.5px;padding:6px 10px;text-transform:uppercase;text-align:center}
+.obs-titulo{background:#F5C400!important;color:#111;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;font-family:var(--fonte-titulo);font-weight:700;font-size:12px;letter-spacing:.5px;padding:6px 10px;text-transform:uppercase;text-align:center}
 .obs-item{display:grid;grid-template-columns:200px 1fr;border-top:1px solid var(--cinza-borda)}
 .obs-label{background:var(--pm-amarelo-claro);padding:8px 10px;font-size:11px;font-weight:600;color:var(--pm-preto);display:flex;align-items:center}
 .obs-valor{padding:6px 10px;font-size:12px;line-height:1.4}
@@ -999,7 +999,7 @@ function renderizarEscala(){
   </table>
 
   <!-- BLOCO SOBREAVISO -->
-  <div style="border-top:2px solid var(--pm-preto);padding:6px 10px;background:var(--pm-amarelo);color:var(--pm-preto);font-family:var(--fonte-titulo);font-weight:700;font-size:12px;letter-spacing:.4px;text-transform:uppercase;text-align:center;position:relative">
+  <div style="border-top:2px solid var(--pm-preto);padding:6px 10px;background:#F5C400!important;color:#111;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;font-family:var(--fonte-titulo);font-weight:700;font-size:12px;letter-spacing:.4px;text-transform:uppercase;text-align:center;position:relative">
     Escala Sobreaviso Semanal — ${fmtDt(dI)} às 08h00 a ${fmtDt(dF)} às 08h00
     <button onclick="abrirModalRetificarSobre('${sem.id}')" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.2);border:none;color:var(--pm-preto);font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;cursor:pointer;font-family:var(--fonte-corpo);text-transform:none">✎ Retificar</button>
   </div>
@@ -2056,24 +2056,24 @@ function renderizarFrequencia(){
 
   var cabDias1 = gerarCabecalhoDias(1,15);
   var cabDias2 = gerarCabecalhoDias(16,diasNoMes);
-  var cabComum = '<th style="width:24px;text-align:center;font-size:9px;padding:2px;background:var(--azul-pm);color:#fff;border:1px solid #ccc">#</th>'+
-                 '<th style="font-size:9px;padding:2px;background:var(--azul-pm);color:#fff;border:1px solid #ccc">Posto/Grad</th>'+
-                 '<th style="font-size:9px;padding:2px;background:var(--azul-pm);color:#fff;border:1px solid #ccc">RE</th>'+
-                 '<th style="font-size:9px;padding:2px;background:var(--azul-pm);color:#fff;border:1px solid #ccc">Nome</th>';
-  var cabTotal1 = '<th style="font-size:9px;padding:2px;background:var(--pm-amarelo);color:var(--pm-preto);border:1px solid #ccc">½ DA</th>'+
-                  '<th style="font-size:9px;padding:2px;background:var(--pm-amarelo);color:var(--pm-preto);border:1px solid #ccc">Dias<br/>Trab</th>';
-  var cabTotal2 = '<th style="font-size:9px;padding:2px;background:var(--pm-amarelo);color:var(--pm-preto);border:1px solid #ccc">½ DA<br/><span style=\"font-weight:400;font-size:8px\">Quinz.</span></th>'+
-                  '<th style="font-size:9px;padding:2px;background:var(--pm-amarelo);color:var(--pm-preto);border:1px solid #ccc">Dias<br/>Trab<br/><span style=\"font-weight:400;font-size:8px\">Quinz.</span></th>'+
-                  '<th style="font-size:9px;padding:2px;background:#D4A900;color:var(--pm-preto);border:1px solid #ccc">½ DA<br/><span style=\"font-weight:400;font-size:8px\">Mês</span></th>'+
-                  '<th style="font-size:9px;padding:2px;background:#D4A900;color:var(--pm-preto);border:1px solid #ccc">Dias<br/>Trab<br/><span style=\"font-weight:400;font-size:8px\">Mês</span></th>';
+  var cabComum = '<th style="width:24px;text-align:center;font-size:9px;padding:2px;background:#1a3a5c!important;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important">#</th>'+
+                 '<th style="font-size:9px;padding:2px;background:#1a3a5c!important;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important">Posto/Grad</th>'+
+                 '<th style="font-size:9px;padding:2px;background:#1a3a5c!important;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important">RE</th>'+
+                 '<th style="font-size:9px;padding:2px;background:#1a3a5c!important;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important">Nome</th>';
+  var cabTotal1 = '<th style="font-size:9px;padding:2px;background:#F5C400!important;color:#111;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;border:1px solid #ccc">½ DA</th>'+
+                  '<th style="font-size:9px;padding:2px;background:#F5C400!important;color:#111;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;border:1px solid #ccc">Dias<br/>Trab</th>';
+  var cabTotal2 = '<th style="font-size:9px;padding:2px;background:#F5C400!important;color:#111;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;border:1px solid #ccc">½ DA<br/><span style=\"font-weight:400;font-size:8px\">Quinz.</span></th>'+
+                  '<th style="font-size:9px;padding:2px;background:#F5C400!important;color:#111;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;border:1px solid #ccc">Dias<br/>Trab<br/><span style=\"font-weight:400;font-size:8px\">Quinz.</span></th>'+
+                  '<th style="font-size:9px;padding:2px;background:#D4A900!important;color:#111;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;border:1px solid #ccc">½ DA<br/><span style=\"font-weight:400;font-size:8px\">Mês</span></th>'+
+                  '<th style="font-size:9px;padding:2px;background:#D4A900!important;color:#111;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;border:1px solid #ccc">Dias<br/>Trab<br/><span style=\"font-weight:400;font-size:8px\">Mês</span></th>';
 
-  var cabInst = '<div style="background:var(--pm-amarelo);padding:8px 12px;border:2px solid var(--pm-preto);margin-bottom:4px">'+
+  var cabInst = '<div style="background:#F5C400!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;padding:8px 12px;border:2px solid #111;margin-bottom:4px">'+
     '<div style="display:grid;grid-template-columns:1fr 2fr 1fr 1fr;gap:8px;align-items:center">'+
-    '<div style="font-size:10px;font-weight:700">POLÍCIA MILITAR<br/>DO ESTADO DE SÃO PAULO</div>'+
-    '<div style="text-align:center;font-size:11px;font-weight:700">CONTROLE DE FREQUÊNCIA<br/>'+
+    '<div style="font-size:10px;font-weight:700;color:#111">POLÍCIA MILITAR<br/>DO ESTADO DE SÃO PAULO</div>'+
+    '<div style="text-align:center;font-size:11px;font-weight:700;color:#111">CONTROLE DE FREQUÊNCIA<br/>'+
     '<span style="font-size:10px;font-weight:400">OPM: 3º BPRV | Cód: 620030000</span></div>'+
-    '<div style="text-align:center;font-size:11px;font-weight:700">MÊS: '+MESES_NOME[mes].toUpperCase()+'<br/>ANO: '+ano+'</div>'+
-    '<div style="text-align:center;font-size:10px">Pág. 1 / 2</div>'+
+    '<div style="text-align:center;font-size:11px;font-weight:700;color:#111">MÊS: '+MESES_NOME[mes].toUpperCase()+'<br/>ANO: '+ano+'</div>'+
+    '<div style="text-align:center;font-size:10px;color:#111">Pág. 1 / 2</div>'+
     '</div></div>';
 
   var cabInst2 = cabInst.replace('Pág. 1 / 2','Pág. 2 / 2');
@@ -2154,6 +2154,8 @@ function exportarFrequenciaPDF(){
 
   var css = [
     'body{font-family:Arial,sans-serif;font-size:10px;margin:8mm}',
+    '*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}',
+    'div[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}',
     'table{border-collapse:collapse;width:100%}',
     'th,td{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}',
     '.freq-d{background:#e8f5e9!important;color:#1b5e20!important}',
