@@ -1952,11 +1952,11 @@ function renderizarFrequencia(){
   var rodape = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:16px;font-size:10px;text-align:center">'+
     '<div>'+
       '<div style="font-size:9px;color:#888;margin-bottom:2px">ELABORADOR</div>'+
-      '<input id="freqElab" type="text" style="width:100%;border:none;border-bottom:1px solid #000;text-align:center;font-size:10px;padding:2px;outline:none" placeholder="Nome / Posto"/>'+
+      '<input id="freqElab" type="text" style="width:100%;border:none;border-bottom:1px solid #000;text-align:center;font-size:10px;padding:2px;outline:none" placeholder="Nome / Graduação"/>'+
     '</div>'+
     '<div>'+
       '<div style="font-size:9px;color:#888;margin-bottom:2px">CONFERÊNCIA</div>'+
-      '<input id="freqConf" type="text" style="width:100%;border:none;border-bottom:1px solid #000;text-align:center;font-size:10px;padding:2px;outline:none" value="'+ofSobreNome+'" placeholder="Oficial de Sobreaviso"/>'+
+      '<input id="freqConf" type="text" style="width:100%;border:none;border-bottom:1px solid #000;text-align:center;font-size:10px;padding:2px;outline:none" placeholder="Nome / Posto"/>'+
     '</div>'+
     '<div>'+
       '<div style="font-size:9px;color:#888;margin-bottom:2px">DIRETOR / CMT / CHEFE</div>'+
@@ -1978,6 +1978,20 @@ function renderizarFrequencia(){
     legenda+rodape;
 
   container.innerHTML = html1 + html2;
+
+  // Garante que os campos do rodapé sejam editáveis após inserção no DOM
+  setTimeout(function(){
+    ['freqElab','freqConf','freqDir'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el){
+        el.removeAttribute('readonly');
+        el.style.pointerEvents = 'auto';
+        el.style.webkitUserSelect = 'text';
+        el.style.userSelect = 'text';
+        el.style.cursor = 'text';
+      }
+    });
+  }, 100);
 }
 
 function exportarFrequenciaPDF(){
