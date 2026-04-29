@@ -597,60 +597,7 @@ body{font-family:var(--fonte-corpo);background:var(--cinza-fundo);color:var(--te
 // ═══════════════════════════════════════════════════════
 const DB_KEY = 'escalaOps_v2'; // versão nova — limpa cache antigo automaticamente
 
-let db = {
-  policiais: [
-    {id:'id_def_p1',tipo:'ATENDENTE',nome:'Cb PM 105553-4 Nielsen',tel:'',ativo:true},
-    {id:'id_def_p2',tipo:'ATENDENTE',nome:'Cb PM 106715-0 Luciana',tel:'',ativo:true},
-    {id:'id_def_p3',tipo:'ATENDENTE',nome:'Cb PM 109918-3 Luciano',tel:'',ativo:true},
-    {id:'id_def_p4',tipo:'ATENDENTE',nome:'Cb PM 137080-4 Marcelo Cruz',tel:'',ativo:true},
-    {id:'id_def_p5',tipo:'ATENDENTE',nome:'Cb PM 129629-9 Daniel Silva',tel:'',ativo:true},
-    {id:'id_def_o1',tipo:'OF_SOBREAVISO',nome:'Maj PM Carrijo',tel:'(16) 98175-0211',ativo:true},
-    {id:'id_def_o2',tipo:'OF_SOBREAVISO',nome:'Cap PM Cavalari',tel:'(17) 99117-5422',ativo:true},
-    {id:'id_def_o3',tipo:'OF_SOBREAVISO',nome:'Cap PM Victor Lima',tel:'(16) 99764-5392',ativo:true},
-    {id:'id_def_o4',tipo:'OF_SUPERVISOR',nome:'Cap PM Redicopa',tel:'(16) 99738-6103',ativo:true},
-    {id:'id_def_o5',tipo:'OF_SUPERVISOR',nome:'Cap PM Camargo',tel:'(16) 99729-9162',ativo:true},
-    {id:'id_def_o6',tipo:'OF_PERMANENCIA',nome:'1º Ten PM Aaron',tel:'(16) 98220-9930',ativo:true},
-    {id:'id_def_o7',tipo:'OF_PERMANENCIA',nome:'1º Ten PM Viola',tel:'(19) 99508-6176',ativo:true},
-  ],
-  statusOpts: ['D','N','A','FA','F','D/N','EAP','LP','14D','14N'],
-  statusDesc: {
-    'D':'Diurno 06h00 às 18h00',
-    'N':'Noturno 18h00 às 06h00',
-    'A':'Folga',
-    'F':'Férias',
-    'D/N':'Serviço 24h (06h00 às 06h00)',
-    'EAP':'Estágio',
-    'LP':'Licença Prêmio',
-    '14D':'14º Dia (Diurno) — reinício contagem',
-    '14N':'14º Dia (Noturno) — reinício contagem',
-    'FA' :'Folga Apurada (após 14 dias) — célula azul'
-  },
-  semanas: [],
-  semanaAtual: 0
-};
-
-// ═══════════════════════════════════════════════════════
-// GITHUB GIST — configuração de nuvem
-// ─────────────────────────────────────────────────────
-// PASSO A PASSO:
-//  1. Crie conta em github.com
-//  2. Acesse gist.github.com → "+ New gist"
-//     - Filename: escala_dados.json
-//     - Conteúdo: {}
-//     - Clique "Create secret gist"
-//     - Copie o GIST ID da URL (32 chars após gist.github.com/)
-//  3. Gere um token: github.com/settings/tokens → "Generate new token (classic)"
-//     - Note: "Escala Token"
-//     - Marque apenas: gist
-//     - Clique "Generate token" e copie
-//  4. Cole os valores abaixo e faça upload no GitHub Pages
-// ═══════════════════════════════════════════════════════
-var GIST_ID    = 'fa7a509cff82337028d6552553e0c011';    // 32 chars hex
-var GIST_TOKEN = ['ghp_KQCzwQ','Gsyrz2nlHn','Uvutzy7sej','WYfQ1TKDFK'].join('');      // ghp_...
-var GIST_FILE  = 'escala_dados.json';
-
-var _salvandoNuvem = false;
-var _filaParaSalvar = false;
+let db = {"policiais":[{"id":"id_def_p1","tipo":"ATENDENTE","nome":"Cb PM 105553-4 Nielsen","tel":"","ativo":true},{"id":"id_def_p2","tipo":"ATENDENTE","nome":"Cb PM 106715-0 Luciana","tel":"","ativo":true},{"id":"id_def_p3","tipo":"ATENDENTE","nome":"Cb PM 109918-3 Luciano","tel":"","ativo":true},{"id":"id_def_p4","tipo":"ATENDENTE","nome":"Cb PM 137080-4 Marcelo Cruz","tel":"","ativo":true},{"id":"id_def_p5","tipo":"ATENDENTE","nome":"Cb PM 129629-9 Daniel Silva","tel":"","ativo":true},{"id":"id_def_o1","tipo":"OF_SOBREAVISO","nome":"Maj PM Carrijo","tel":"(16) 98175-0211","ativo":true},{"id":"id_def_o2","tipo":"OF_SOBREAVISO","nome":"Cap PM Cavalari","tel":"(17) 99117-5422","ativo":true},{"id":"id_def_o3","tipo":"OF_SOBREAVISO","nome":"Cap PM Victor Lima","tel":"(16) 99764-5392","ativo":true},{"id":"id_def_o4","tipo":"OF_SUPERVISOR","nome":"Cap PM Redicopa","tel":"(16) 99738-6103","ativo":true},{"id":"id_def_o5","tipo":"OF_SUPERVISOR","nome":"Cap PM Camargo","tel":"(16) 99729-9162","ativo":true},{"id":"id_def_o6","tipo":"OF_PERMANENCIA","nome":"1º Ten PM Aaron","tel":"(16) 98220-9930","ativo":true},{"id":"id_def_o7","tipo":"OF_PERMANENCIA","nome":"1º Ten PM Viola","tel":"(19) 99508-6176","ativo":true}],"statusOpts":["D","N","A","FA","F","D/N","EAP","LP","14D","14N"],"statusDesc":{"D":"Diurno 06h00 às 18h00","N":"Noturno 18h00 às 06h00","A":"Folga","F":"Férias","D/N":"Serviço 24h (06h00 às 06h00)","EAP":"Estágio","LP":"Licença Prêmio","14D":"14º Dia (Diurno) — reinício contagem","14N":"14º Dia (Noturno) — reinício contagem","FA":"Folga Apurada (após 14 dias) — célula azul"},"semanas":[{"id":"sem_1777079606569","dataInicio":"2026-03-29","oficSobre":"","oficSuperv":"","oficPerm":"","obs1":"","obs2":"","obs3":"","marcacoes":{"id_def_p1":["N","A","A","D","N","A","A"],"id_def_p2":["D","N","A","A","D","N","A"],"id_def_p3":["A","A","N","A","A","D","N"],"id_def_p4":["F","F","F","F","F","F","F"],"id_def_p5":["A","A","D","N","A","A","D"]},"_folgaInfo":{"id_def_p1":{},"id_def_p2":{},"id_def_p3":{},"id_def_p4":{},"id_def_p5":{}}},{"id":"sem_1777423381538","dataInicio":"2026-04-05","oficSobre":"id_def_o3","oficSuperv":"id_def_o5","oficPerm":"id_def_o7","obs1":"1.1. Mensagens de Repercussão/Vulto normalizadas, todoas, sem exceção deverão passar pela Sala de Operações do BPRv.\n1.1.1. manter orientação junto aos Operadores de Rádios e Sala de Operações das Cia para não enviarem direto ao CPRv.\n","obs2":"2.1. café - 07h00 às 07h30 (manter a entrada principal do BPRv fechada - abertura a partir das 07h30);\n2.2. entrada principal do BPRv deverá estar aberta a partir das 08h00;\n2.3. treinamento físico - 10h00 às 11h00;\n2.3.1. na impossibilidade de participar do treinamento físico, o Atendente continuará suas atividades na Sala de operações;\n2.4. almoço - 11h00 às 12h00 (apoio auxiliar Div Op);\n2.5. o horário do Treinamento Físico e Almoço, será apoiado pela Divisão Operacional do BPRv;\n2.6. entrada principal do BPRv deverá estar aberta a partir das 08h00;\n2.7. jantar - 19h30 às 20h30 (manter a entrada principal do BPRv fechada a partir das 18h00).\n","obs3":"3.1. Cb PM Marcelo Cruz, fruição de 30 dias de férias a contar de 17MAR26.\n","marcacoes":{"id_def_p1":["D","N","A","A","D","N","A"],"id_def_p2":["A","D","N","A","A","D","N"],"id_def_p3":["A","A","D","N","A","A","D"],"id_def_p4":["F","F","F","F","F","F","F"],"id_def_p5":["N","A","A","D","N","A","A"]},"_folgaInfo":{"id_def_p1":{},"id_def_p2":{},"id_def_p3":{},"id_def_p4":{},"id_def_p5":{}}},{"id":"sem_1777423708780","dataInicio":"2026-04-12","oficSobre":"id_def_o2","oficSuperv":"id_def_o4","oficPerm":"id_def_o7","obs1":"1.1. Mensagens de Repercussão/Vulto normalizadas, todoas, sem exceção deverão passar pela Sala de Operações do BPRv.\n1.1.1. manter orientação junto aos Operadores de Rádios e Sala de Operações das Cia para não enviarem direto ao CPRv.\n","obs2":"2.1. café - 07h00 às 07h30 (manter a entrada principal do BPRv fechada - abertura a partir das 07h30);\n2.2. treinamento físico - 10h00 às 11h00;\n2.2.1. a impossibilidade de participar do treinamento físico, o Atendente permanecerá em atividade na Sala de operações;\n2.3. almoço - 11h00 às 12h00 (apoio auxiliar Div Op);\n2.4. o horário do Treinamento Físico e Almoço, será apoiado pela Divisão Operacional do BPRv;\n2.5. jantar - 19h30 às 20h30 (manter a entrada principal do BPRv fechada a partir das 18h00);\n","obs3":"3.1. Cb PM Marcelo Cruz, fruição de 30 dias de férias a contar de 17MAR26;\n3.2. Cb PM Nielsen, folga mensal no dia 13ABR26;\n3.3. Cb PM Luciana, folga mensal no dia 18ABR26.\n","marcacoes":{"id_def_p1":["A","A","N","A","A","A","D"],"id_def_p2":["A","A","D","N","A","A","A"],"id_def_p3":["N","A","A","D","N","A","A"],"id_def_p4":["F","F","F","F","A","D","N"],"id_def_p5":["D","N","A","A","D","N","A"]},"_folgaInfo":{"id_def_p1":{},"id_def_p2":{},"id_def_p3":{},"id_def_p4":{},"id_def_p5":{}}},{"id":"sem_1777423949873","dataInicio":"2026-04-19","oficSobre":"id_def_o1","oficSuperv":"id_def_o5","oficPerm":"id_def_o7","obs1":"1.1. Mensagens de Repercussão/Vulto normalizadas, todoas, sem exceção deverão passar pela Sala de Operações do BPRv.\n1.1.1. manter orientação junto aos Operadores de Rádios e Sala de Operações das Cia para não enviarem direto ao CPRv.\n","obs2":"2.1. café - 07h00 às 07h30 (manter a entrada principal do BPRv fechada - abertura a partir das 07h30);\n2.2. treinamento físico - 10h00 às 11h00;\n2.2.1. a impossibilidade de participar do treinamento físico, o Atendente permanecerá em atividade na Sala de operações;\n2.3. almoço - 11h00 às 12h00 (apoio auxiliar Div Op);\n2.4. o horário do Treinamento Físico e Almoço, será apoiado pela Divisão Operacional do BPRv;\n2.5. jantar - 19h30 às 20h30 (manter a entrada principal do BPRv fechada a partir das 18h00).\n","obs3":"3.1. Cb PM Luciana, fruição de 15 dias de férias a contar de 19ABR26.\n3.2. Cb PM Daniel Silva, folga mesal no dia 20ABR26. \n","marcacoes":{"id_def_p1":["N","A","A","D","N","A","A"],"id_def_p2":["F","F","F","F","F","F","F"],"id_def_p3":["D","N","A","A","D","N","A"],"id_def_p4":["A","A","D","N","A","A","D"],"id_def_p5":["A","A","N","A","A","D","N"]},"_folgaInfo":{"id_def_p1":{},"id_def_p2":{},"id_def_p3":{},"id_def_p4":{},"id_def_p5":{}}},{"id":"sem_1777424227429","dataInicio":"2026-04-26","oficSobre":"id_def_o3","oficSuperv":"id_def_o4","oficPerm":"id_def_o6","obs1":"1.1. Mensagens de Repercussão/Vulto normalizadas, todoas, sem exceção deverão passar pela Sala de Operações do BPRv.\n1.1.1. manter orientação junto aos Operadores de Rádios e Sala de Operações das Cia para não enviarem direto ao CPRv.\n","obs2":"2.1. café - 07h00 às 07h30 (manter a entrada principal do BPRv fechada - abertura a partir das 07h30);\n2.2. treinamento físico - 10h00 às 11h00;\n2.2.1. a impossibilidade de participar do treinamento físico, o Atendente permanecerá em atividade na Sala de operações;\n2.3. almoço - 11h00 às 12h00 (apoio auxiliar Div Op);\n2.4. o horário do Treinamento Físico e Almoço, será apoiado pela Divisão Operacional do BPRv;\n2.5. jantar - 19h30 às 20h30 (manter a entrada principal do BPRv fechada a partir das 18h00).\n","obs3":"3.1. Cb PM Luciana, fruição de 15 dias de férias a contar de 19ABR26.\n3.2. Cb PM Luciano, folga mensal no dia 27ABR26.\n","marcacoes":{"id_def_p1":["D","N","A","A","D","N","A"],"id_def_p2":["F","F","F","F","F","F","F"],"id_def_p3":["A","A","N","A","A","D","N"],"id_def_p4":["N","A","A","D","N","A","A"],"id_def_p5":["A","A","D","N","A","A","D"]},"_folgaInfo":{"id_def_p1":{},"id_def_p2":{},"id_def_p3":{},"id_def_p4":{},"id_def_p5":{}},"marcacoes14":{"id_def_p1":1}},{"id":"sem_1777079868677","dataInicio":"2026-05-03","oficSobre":"id_def_o2","oficSuperv":"id_def_o4","oficPerm":"id_def_o7","obs1":"","obs2":"","obs3":"","marcacoes":{"id_def_p1":["A","A","A","A","A","A","A"],"id_def_p2":["A","A","A","A","A","A","A"],"id_def_p3":["A","A","A","A","A","A","A"],"id_def_p4":["A","A","A","A","A","A","A"],"id_def_p5":["A","A","A","A","A","A","A"]},"_folgaInfo":{"id_def_p1":{},"id_def_p2":{},"id_def_p3":{},"id_def_p4":{},"id_def_p5":{}}}],"semanaAtual":1,"_contFolga":{"id_def_p1":{"cont":0,"historico":[],"periodos":[]},"id_def_p2":{"cont":0,"historico":[],"periodos":[]},"id_def_p3":{"cont":0,"historico":[],"periodos":[]},"id_def_p4":{"cont":0,"historico":[],"periodos":[]},"id_def_p5":{"cont":0,"historico":[],"periodos":[]}}};
 
 function salvarDB(){
   // Cache local imediato
