@@ -1093,7 +1093,8 @@ function atualizarMarcacao(semId, polId, dia, valor){
   if(valor==='14D'||valor==='14N'){
     if(!sem.marcacoes14) sem.marcacoes14={};
     sem.marcacoes14[polId]=dia;
-    sem.marcacoes[polId][dia]=valor==='14D'?'D':'N';
+    // Mantém 14D/14N na marcação para que calcularFolgasSemana detecte corretamente
+    sem.marcacoes[polId][dia]=valor;
     calcularFolgas(); salvarDB(); renderizarEscala(); return;
   }
 
