@@ -382,6 +382,40 @@ body{font-family:var(--fonte-corpo);background:var(--cinza-fundo);color:var(--te
   </div>
 </div>
 
+<!-- MODAL RETIFICAR PERÍODO -->
+<div class="modal-overlay" id="modalRetificarPeriodo">
+  <div class="modal" style="width:460px">
+    <div class="modal-header">
+      <h3>Retificar Período da Escala</h3>
+      <button class="btn-close" onclick="fecharModal('modalRetificarPeriodo')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:#7a8a9a;margin-bottom:16px">
+        Altere a data de início da semana selecionada. As marcações existentes serão preservadas.
+        Semanas com datas sobrepostas não serão permitidas.
+      </p>
+      <input type="hidden" id="retPerSemId"/>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Semana atual</label>
+          <input type="text" id="retPerAtual" disabled style="background:#f5f5f5;color:#888"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nova data de início (Domingo)</label>
+          <input type="date" id="retPerNovaData"/>
+        </div>
+      </div>
+      <div id="retPerAviso" style="display:none;background:#fce4ec;color:#c0392b;padding:8px 12px;border-radius:4px;font-size:12px;margin-top:8px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="fecharModal('modalRetificarPeriodo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarRetificarPeriodo()">Salvar Retificação</button>
+    </div>
+  </div>
+</div>
+
 <!-- SHELL -->
 <div class="shell">
 
@@ -459,6 +493,7 @@ body{font-family:var(--fonte-corpo);background:var(--cinza-fundo);color:var(--te
           <button class="btn btn-secondary btn-sm" onclick="navSemana(1)">Próxima ▶</button>
           <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="abrirModalGerarSemana()">+ Nova Semana</button>
           <button class="btn btn-secondary btn-sm" onclick="calcularFolgas()">↺ Recalcular Folgas</button>
+          <button class="btn btn-secondary btn-sm" onclick="abrirModalRetificarPeriodo()">📅 Retificar Período</button>
         </div>
         <div class="card" style="overflow-x:auto">
           <div id="escalaContainer"></div>
@@ -1706,6 +1741,76 @@ function imprimirEscala(){
   setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
   toast('Arquivo gerado! Abra-o no navegador — o diálogo de impressão abrirá automaticamente.','success');
   // Remove spans temporários do clone (não afetou o DOM original)
+}
+
+// ═══════════════════════════════════════════════════════
+// RETIFICAR PERÍODO DA ESCALA
+// ═══════════════════════════════════════════════════════
+function abrirModalRetificarPeriodo(){
+  if(db.semanas.length === 0){ toast('Nenhuma semana cadastrada.','error'); return; }
+  var sem = db.semanas[db.semanaAtual];
+  if(_semBloqueada(sem)){
+    toast('Mês encerrado — esta escala não pode mais ser alterada.','error');
+    return;
+  }
+  document.getElementById('retPerSemId').value   = sem.id;
+  document.getElementById('retPerAtual').value   = nomeSemana(sem.dataInicio);
+  document.getElementById('retPerNovaData').value = sem.dataInicio;
+  document.getElementById('retPerAviso').style.display = 'none';
+  abrirModal('modalRetificarPeriodo');
+}
+
+function confirmarRetificarPeriodo(){
+  var semId    = document.getElementById('retPerSemId').value;
+  var novaData = document.getElementById('retPerNovaData').value;
+  var avisoEl  = document.getElementById('retPerAviso');
+
+  if(!novaData){ toast('Informe a nova data.','error'); return; }
+
+  // Verifica se a nova data é um domingo
+  var d = new Date(novaData + 'T00:00:00');
+  if(d.getDay() !== 0){
+    avisoEl.textContent = 'A data de início deve ser um domingo. O dia ' + novaData + ' é ' +
+      ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][d.getDay()] + '.';
+    avisoEl.style.display = 'block';
+    return;
+  }
+
+  // Verifica sobreposição com outras semanas
+  var sobreposicao = db.semanas.filter(function(s){
+    if(s.id === semId) return false; // ignora a própria semana
+    var dS   = new Date(s.dataInicio + 'T00:00:00');
+    var dSFim = new Date(dS); dSFim.setDate(dSFim.getDate()+6);
+    var dN   = new Date(novaData + 'T00:00:00');
+    var dNFim = new Date(dN); dNFim.setDate(dNFim.getDate()+6);
+    // Verifica se os períodos se sobrepõem
+    return dN <= dSFim && dNFim >= dS;
+  });
+
+  if(sobreposicao.length > 0){
+    var nomes = sobreposicao.map(function(s){ return nomeSemana(s.dataInicio); }).join(', ');
+    avisoEl.textContent = 'Sobreposição detectada com: ' + nomes + '. Ajuste as datas antes de continuar.';
+    avisoEl.style.display = 'block';
+    return;
+  }
+
+  // Aplica a retificação
+  var sem = null;
+  for(var i=0; i<db.semanas.length; i++){
+    if(db.semanas[i].id === semId){ sem = db.semanas[i]; break; }
+  }
+  if(!sem){ toast('Semana não encontrada.','error'); return; }
+
+  sem.dataInicio = novaData;
+
+  // Reordena por data
+  db.semanas.sort(function(a,b){ return a.dataInicio.localeCompare(b.dataInicio); });
+  db.semanaAtual = db.semanas.findIndex(function(s){ return s.id === semId; });
+
+  salvarDB();
+  fecharModal('modalRetificarPeriodo');
+  renderizarEscala();
+  toast('Período retificado com sucesso!','success');
 }
 
 // ═══════════════════════════════════════════════════════
