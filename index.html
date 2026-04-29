@@ -1185,14 +1185,18 @@ function calcularFolgasSemana(sem){
 function atualizarFolgaGrid(){
   // Recalcula estado atual de cada policial
   const atendentes = db.policiais.filter(p=>p.tipo==='ATENDENTE'&&p.ativo);
-  db._contFolga = {};
-  db.semanas.forEach(s=>{ s._folgaInfo=undefined; calcularFolgasSemana(s); });
+  // Usa o estado já calculado por calcularFolgas()
+  // Se não foi calculado ainda, calcula agora
+  if(!db._contFolga || Object.keys(db._contFolga).length === 0){
+    db._contFolga = {};
+    db.semanas.forEach(s=>{ s._folgaInfo=undefined; calcularFolgasSemana(s); });
+  }
 
   const grid = document.getElementById('folgaGrid');
   if(!grid) return;
   let html = '';
   atendentes.forEach(pol=>{
-    const estado = db._contFolga[pol.id]||{cont:0,historico:[]};
+    const estado = db._contFolga[pol.id]||{cont:0,historico:[],periodos:[]};
     const pct = Math.min(100, Math.round((estado.cont/14)*100));
     const nomeDisplay = pol.nome.split(' ').pop();
     var periodos14 = (estado.periodos||[]).length;
