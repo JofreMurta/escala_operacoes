@@ -1997,9 +1997,12 @@ function renderizarFrequencia(){
   }
 
   // Calcula totais
-  function calcularTotais(pol){
+  function calcularTotais(pol, de, ate){
+    // de/ate definem o período (quinzena ou mês inteiro)
+    var inicio = de   || 1;
+    var fim    = ate  || diasNoMes;
     var meiDA=0, diasTrab=0;
-    for(var d=1; d<=diasNoMes; d++){
+    for(var d=inicio; d<=fim; d++){
       var marc = mapaMarcacoes[pol.id][d] || '';
       var val  = valorMarcacao(marc);
       meiDA    += val.meiDA;
@@ -2016,14 +2019,16 @@ function renderizarFrequencia(){
     var grad = partes[0] + ' ' + (partes[1]||'');
     var re   = partes[2]||'';
     var nome = partes.slice(3).join(' ');
+    var tot1 = calcularTotais(pol, 1, 15);
+    var totM = calcularTotais(pol, 1, diasNoMes);
     linhasAtend += '<tr>'+
       '<td style="text-align:center;font-size:10px;padding:3px;border:1px solid #ccc;font-weight:700">'+(idx+1)+'</td>'+
       '<td style="font-size:9px;padding:3px;border:1px solid #ccc;white-space:nowrap">'+grad+'</td>'+
       '<td style="font-size:9px;padding:3px;border:1px solid #ccc;text-align:center">'+re+'</td>'+
       '<td style="font-size:10px;padding:3px;border:1px solid #ccc;white-space:nowrap">'+nome+'</td>'+
       gerarCelulasDias(pol,1,15)+
-      '<td style="text-align:center;font-weight:700;font-size:10px;padding:3px;border:1px solid #ccc;background:#FFF0A0">'+totais.meiDA+'</td>'+
-      '<td style="text-align:center;font-weight:700;font-size:10px;padding:3px;border:1px solid #ccc;background:#FFF0A0">'+totais.diasTrab+'</td>'+
+      '<td style="text-align:center;font-weight:700;font-size:10px;padding:3px;border:1px solid #ccc;background:#FFF0A0">'+tot1.meiDA+'</td>'+
+      '<td style="text-align:center;font-weight:700;font-size:10px;padding:3px;border:1px solid #ccc;background:#FFF0A0">'+tot1.diasTrab+'</td>'+
       '</tr>';
   });
 
@@ -2034,14 +2039,18 @@ function renderizarFrequencia(){
     var grad = partes[0] + ' ' + (partes[1]||'');
     var re   = partes[2]||'';
     var nome = partes.slice(3).join(' ');
+    var tot2  = calcularTotais(pol, 16, diasNoMes);
+    var totM2 = calcularTotais(pol, 1,  diasNoMes);
     linhasAtend2 += '<tr>'+
       '<td style="text-align:center;font-size:10px;padding:3px;border:1px solid #ccc;font-weight:700">'+(idx+1)+'</td>'+
       '<td style="font-size:9px;padding:3px;border:1px solid #ccc;white-space:nowrap">'+grad+'</td>'+
       '<td style="font-size:9px;padding:3px;border:1px solid #ccc;text-align:center">'+re+'</td>'+
       '<td style="font-size:10px;padding:3px;border:1px solid #ccc;white-space:nowrap">'+nome+'</td>'+
       gerarCelulasDias(pol,16,diasNoMes)+
-      '<td style="text-align:center;font-weight:700;font-size:10px;padding:3px;border:1px solid #ccc;background:#FFF0A0">'+totais.meiDA+'</td>'+
-      '<td style="text-align:center;font-weight:700;font-size:10px;padding:3px;border:1px solid #ccc;background:#FFF0A0">'+totais.diasTrab+'</td>'+
+      '<td style="text-align:center;font-weight:700;font-size:10px;padding:3px;border:1px solid #ccc;background:#FFF0A0">'+tot2.meiDA+'</td>'+
+      '<td style="text-align:center;font-weight:700;font-size:10px;padding:3px;border:1px solid #ccc;background:#FFF0A0">'+tot2.diasTrab+'</td>'+
+      '<td style="text-align:center;font-weight:700;font-size:10px;padding:3px;border:1px solid #ccc;background:#FFE066">'+totM2.meiDA+'</td>'+
+      '<td style="text-align:center;font-weight:700;font-size:10px;padding:3px;border:1px solid #ccc;background:#FFE066">'+totM2.diasTrab+'</td>'+
       '</tr>';
   });
 
@@ -2051,8 +2060,12 @@ function renderizarFrequencia(){
                  '<th style="font-size:9px;padding:2px;background:var(--azul-pm);color:#fff;border:1px solid #ccc">Posto/Grad</th>'+
                  '<th style="font-size:9px;padding:2px;background:var(--azul-pm);color:#fff;border:1px solid #ccc">RE</th>'+
                  '<th style="font-size:9px;padding:2px;background:var(--azul-pm);color:#fff;border:1px solid #ccc">Nome</th>';
-  var cabTotal = '<th style="font-size:9px;padding:2px;background:var(--pm-amarelo);color:var(--pm-preto);border:1px solid #ccc">½ DA</th>'+
-                 '<th style="font-size:9px;padding:2px;background:var(--pm-amarelo);color:var(--pm-preto);border:1px solid #ccc">Dias<br/>Trab</th>';
+  var cabTotal1 = '<th style="font-size:9px;padding:2px;background:var(--pm-amarelo);color:var(--pm-preto);border:1px solid #ccc">½ DA</th>'+
+                  '<th style="font-size:9px;padding:2px;background:var(--pm-amarelo);color:var(--pm-preto);border:1px solid #ccc">Dias<br/>Trab</th>';
+  var cabTotal2 = '<th style="font-size:9px;padding:2px;background:var(--pm-amarelo);color:var(--pm-preto);border:1px solid #ccc">½ DA<br/><span style=\"font-weight:400;font-size:8px\">Quinz.</span></th>'+
+                  '<th style="font-size:9px;padding:2px;background:var(--pm-amarelo);color:var(--pm-preto);border:1px solid #ccc">Dias<br/>Trab<br/><span style=\"font-weight:400;font-size:8px\">Quinz.</span></th>'+
+                  '<th style="font-size:9px;padding:2px;background:#D4A900;color:var(--pm-preto);border:1px solid #ccc">½ DA<br/><span style=\"font-weight:400;font-size:8px\">Mês</span></th>'+
+                  '<th style="font-size:9px;padding:2px;background:#D4A900;color:var(--pm-preto);border:1px solid #ccc">Dias<br/>Trab<br/><span style=\"font-weight:400;font-size:8px\">Mês</span></th>';
 
   var cabInst = '<div style="background:var(--pm-amarelo);padding:8px 12px;border:2px solid var(--pm-preto);margin-bottom:4px">'+
     '<div style="display:grid;grid-template-columns:1fr 2fr 1fr 1fr;gap:8px;align-items:center">'+
@@ -2087,14 +2100,14 @@ function renderizarFrequencia(){
 
   var html1 = cabInst+
     '<table style="width:100%;border-collapse:collapse;font-size:10px">'+
-    '<thead><tr>'+cabComum+cabDias1+cabTotal+'</tr></thead>'+
+    '<thead><tr>'+cabComum+cabDias1+cabTotal1+'</tr></thead>'+
     '<tbody>'+linhasAtend+'</tbody></table>'+
     legenda;
 
   var html2 = '<hr style="margin:20px 0;border:2px dashed #ccc"/>'+
     cabInst2+
     '<table style="width:100%;border-collapse:collapse;font-size:10px">'+
-    '<thead><tr>'+cabComum+cabDias2+cabTotal+'</tr></thead>'+
+    '<thead><tr>'+cabComum+cabDias2+cabTotal2+'</tr></thead>'+
     '<tbody>'+linhasAtend2+'</tbody></table>'+
     legenda+rodape;
 
