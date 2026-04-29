@@ -525,11 +525,7 @@ body{font-family:var(--fonte-corpo);background:var(--cinza-fundo);color:var(--te
           </div>
           <div class="card-body">
             <p style="font-size:12px;color:#7a8a9a;margin-bottom:14px">
-              Regra: a cada 14 dias trabalhados (D+N) o policial adquire direito a folga.
-              O 14º dia é marcado em <span style="background:var(--verde-14);color:#fff;padding:1px 6px;border-radius:3px;font-size:11px;font-weight:700">VERDE</span>.
-              A próxima segunda-feira "D" recebe marcação "A" e é pintada em
-              <span style="background:var(--azul-fruicao);color:#fff;padding:1px 6px;border-radius:3px;font-size:11px;font-weight:700">AZUL</span>.
-            </p>
+              Selecione <strong>14D</strong> ou <strong>14N</strong> na célula da escala para marcar manualmente o 14º dia. A célula ficará em <span style="background:var(--verde-14);color:#fff;padding:1px 6px;border-radius:3px;font-size:11px;font-weight:700">VERDE</span> e o período será registrado no histórico abaixo. Após a folga ser concedida, marque <strong>FA</strong> na célula correspondente para registrar a data da folga apurada.</p>
             <div class="folga-grid" id="folgaGrid"></div>
           </div>
         </div>
@@ -1198,17 +1194,20 @@ function atualizarFolgaGrid(){
     const estado = db._contFolga[pol.id]||{cont:0,historico:[]};
     const pct = Math.min(100, Math.round((estado.cont/14)*100));
     const nomeDisplay = pol.nome.split(' ').pop();
+    var periodos14 = (estado.periodos||[]).length;
+    var folgasReg  = (estado.periodos||[]).filter(function(p){ return p.folga; }).length;
+    var pendentes  = periodos14 - folgasReg;
     html += `<div class="folga-card">
       <div class="folga-card-header">${nomeDisplay}</div>
       <div class="folga-card-body">
-        <div class="folga-stat"><span class="label">Dias contados</span><span class="val">${estado.cont}</span></div>
-        <div class="folga-stat"><span class="label">Meta</span><span class="val">14</span></div>
-        <div class="folga-stat"><span class="label">Status</span>
-          <span class="val" style="font-size:11px;color:var(--verde-14)">
-            Contando
+        <div class="folga-stat"><span class="label">14º dias marcados</span><span class="val" style="color:var(--verde-14)">${periodos14}</span></div>
+        <div class="folga-stat"><span class="label">Folgas apuradas (FA)</span><span class="val" style="color:var(--azul-pm)">${folgasReg}</span></div>
+        <div class="folga-stat"><span class="label">Folgas pendentes</span>
+          <span class="val" style="font-size:11px;color:${pendentes>0?'#c0392b':'var(--verde-14)'}">
+            ${pendentes>0?pendentes+' pendente(s)':'Em dia'}
           </span>
         </div>
-        <div class="folga-bar-wrap"><div class="folga-bar" style="width:${pct}%"></div></div>
+        <div class="folga-bar-wrap"><div class="folga-bar" style="width:${periodos14>0?Math.round((folgasReg/periodos14)*100):0}%"></div></div>
       </div>
     </div>`;
   });
