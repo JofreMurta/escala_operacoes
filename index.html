@@ -1911,16 +1911,16 @@ function renderizarFrequencia(){
   // Cabeçalho das colunas de dias
   var cabDias = '';
   for(var d=1; d<=diasNoMes; d++){
-    cabDias += '<th style="width:18px;text-align:center;font-size:8px;padding:1px;background:#1a3a5c;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">'+d+'</th>';
+    cabDias += '<th style="width:15px;text-align:center;font-size:7px;padding:1px;background:#1a3a5c;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">'+d+'</th>';
   }
 
-  var cabComum = '<th style="width:20px;text-align:center;font-size:9px;padding:2px;background:#1a3a5c;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">#</th>'+
-    '<th style="width:70px;font-size:9px;padding:2px;background:#1a3a5c;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">Posto/Grad</th>'+
-    '<th style="width:55px;font-size:9px;padding:2px;background:#1a3a5c;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">RE</th>'+
-    '<th style="width:90px;font-size:9px;padding:2px;background:#1a3a5c;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">Nome</th>';
+  var cabComum = '<th style="width:16px;text-align:center;font-size:8px;padding:1px;background:#1a3a5c;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">#</th>'+
+    '<th style="width:55px;font-size:8px;padding:1px;background:#1a3a5c;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">Posto/Grad</th>'+
+    '<th style="width:48px;font-size:8px;padding:1px;background:#1a3a5c;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">RE</th>'+
+    '<th style="width:75px;font-size:8px;padding:1px;background:#1a3a5c;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">Nome</th>';
 
-  var cabTotal = '<th style="font-size:9px;padding:2px;background:#F5C400;color:#111;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">½ DA</th>'+
-    '<th style="font-size:9px;padding:2px;background:#F5C400;color:#111;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">Dias<br/>Trab</th>';
+  var cabTotal = '<th style="width:28px;font-size:9px;padding:2px;background:#F5C400;color:#111;border:1px solid #ccc;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact">½ DA</th>'+
+    '<th style="width:28px;font-size:9px;padding:2px;background:#F5C400;color:#111;border:1px solid #ccc;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact">Dias<br/>Trab</th>';
 
   // Linhas dos atendentes
   var linhas = '';
@@ -1939,18 +1939,18 @@ function renderizarFrequencia(){
       if(marc==='D'||marc==='14D'){ bg='background:#e8f5e9;color:#1b5e20;font-weight:700'; txt='2'; }
       else if(marc==='N'||marc==='14N'){ bg='background:#e8eaf6;color:#1a237e;font-weight:700'; txt='2'; }
       else if(marc==='D/N'){ bg='background:#fff3e0;color:#e65100;font-weight:700'; txt='3'; }
-      else if(marc !== ''){ bg='background:#f5f5f5;color:#999'; txt='0'; }
-      celulasDias += '<td style="text-align:center;font-size:8px;padding:1px;border:1px solid #ddd;'+bg+'">'+txt+'</td>';
+      else if(marc !== ''){ bg='background:#f5f5f5;color:#999'; txt='A'; }
+      celulasDias += '<td style="width:15px;text-align:center;font-size:7px;padding:1px;border:1px solid #ddd;'+bg+'">'+txt+'</td>';
     }
 
     linhas += '<tr>'+
-      '<td style="text-align:center;font-size:9px;padding:2px;border:1px solid #ccc;font-weight:700">'+(idx+1)+'</td>'+
-      '<td style="font-size:9px;padding:2px;border:1px solid #ccc;white-space:nowrap">'+grad+'</td>'+
-      '<td style="font-size:9px;padding:2px;border:1px solid #ccc;text-align:center">'+re+'</td>'+
-      '<td style="font-size:9px;padding:2px;border:1px solid #ccc;white-space:nowrap">'+nome+'</td>'+
+      '<td style="width:16px;text-align:center;font-size:8px;padding:1px;border:1px solid #ccc;font-weight:700">'+(idx+1)+'</td>'+
+      '<td style="width:55px;font-size:8px;padding:1px;border:1px solid #ccc;white-space:nowrap">'+grad+'</td>'+
+      '<td style="width:48px;font-size:8px;padding:1px;border:1px solid #ccc;text-align:center">'+re+'</td>'+
+      '<td style="width:75px;font-size:8px;padding:1px;border:1px solid #ccc;white-space:nowrap">'+nome+'</td>'+
       celulasDias+
-      '<td style="text-align:center;font-weight:700;font-size:10px;padding:2px;border:1px solid #ccc;background:#FFF0A0;-webkit-print-color-adjust:exact;print-color-adjust:exact">'+totais.meiDA+'</td>'+
-      '<td style="text-align:center;font-weight:700;font-size:10px;padding:2px;border:1px solid #ccc;background:#FFF0A0;-webkit-print-color-adjust:exact;print-color-adjust:exact">'+totais.diasTrab+'</td>'+
+      '<td style="width:28px;text-align:center;font-weight:700;font-size:10px;padding:2px;border:1px solid #ccc;background:#FFF0A0;-webkit-print-color-adjust:exact;print-color-adjust:exact">'+totais.meiDA+'</td>'+
+      '<td style="width:28px;text-align:center;font-weight:700;font-size:10px;padding:2px;border:1px solid #ccc;background:#FFF0A0;-webkit-print-color-adjust:exact;print-color-adjust:exact">'+totais.diasTrab+'</td>'+
       '</tr>';
   });
 
