@@ -1851,17 +1851,12 @@ function renderizarFrequencia(){
   var container = document.getElementById('freqContainer');
   if(!container) return;
 
-  // Dias do mês
   var diasNoMes = new Date(ano, mes+1, 0).getDate();
-
-  // Atendentes ativos
   var atendentes = db.policiais.filter(function(p){ return p.tipo==='ATENDENTE' && p.ativo; });
 
-  // Monta mapa: polId → {dia: marcacao} para o mês/ano selecionado
+  // Monta mapa: polId → {dia: marcacao}
   var mapaMarcacoes = {};
-  atendentes.forEach(function(pol){
-    mapaMarcacoes[pol.id] = {};
-  });
+  atendentes.forEach(function(pol){ mapaMarcacoes[pol.id] = {}; });
 
   db.semanas.forEach(function(sem){
     var dataBase = new Date(sem.dataInicio+'T00:00:00');
@@ -1872,14 +1867,12 @@ function renderizarFrequencia(){
       var dia = dataCell.getDate();
       atendentes.forEach(function(pol){
         var marc = sem.marcacoes && sem.marcacoes[pol.id];
-        if(marc && marc[c]){
-          mapaMarcacoes[pol.id][dia] = marc[c].toUpperCase();
-        }
+        if(marc && marc[c]) mapaMarcacoes[pol.id][dia] = marc[c].toUpperCase();
       });
     }
   });
 
-  // Oficial de sobreaviso do mês (pega o da última semana do mês)
+  // Oficial de sobreaviso do mês
   var ofSobreNome = '—';
   db.semanas.forEach(function(sem){
     var d = new Date(sem.dataInicio+'T00:00:00');
@@ -1889,67 +1882,15 @@ function renderizarFrequencia(){
     }
   });
 
-  // Função de valor da marcação
   function valorMarcacao(marc){
-    if(!marc || marc==='A' || marc==='F' || marc==='LP' || marc==='EAP' || marc==='FA') return {meiDA:0, diasTrab:0, cod:marc||''};
-    if(marc==='D' || marc==='N' || marc==='14D' || marc==='14N') return {meiDA:2, diasTrab:1, cod:marc};
-    if(marc==='D/N') return {meiDA:3, diasTrab:1, cod:marc};
-    return {meiDA:0, diasTrab:0, cod:marc};
+    if(marc==='D'||marc==='N'||marc==='14D'||marc==='14N') return {meiDA:2, diasTrab:1};
+    if(marc==='D/N') return {meiDA:3, diasTrab:1};
+    return {meiDA:0, diasTrab:0};
   }
 
-  // Monta cabeçalho de dias (dividido em 2 linhas: 1-16 e 17-31)
-  function gerarCabecalhoDias(de, ate){
-    var h = '';
-    for(var d=de; d<=ate; d++){
-      if(d <= diasNoMes){
-        h += '<th style="width:22px;text-align:center;font-size:9px;padding:2px 1px;background:#1a3a5c;color:#fff;border:1px solid #ccc">'+d+'</th>';
-      } else {
-        // Dias além do mês — cabeçalho cinza
-        h += '<th style="width:22px;text-align:center;font-size:9px;padding:2px 1px;background:#cccccc;color:#999;border:1px solid #ccc">'+d+'</th>';
-      }
-    }
-    return h;
-  }
-
-  // Monta células de dias para um policial
-  function gerarCelulasDias(pol, de, ate){
-    var cells = '';
-    for(var d=de; d<=ate && d<=diasNoMes; d++){
-      var marc = mapaMarcacoes[pol.id][d] || '';
-      var val  = valorMarcacao(marc);
-      var bg   = '';
-      var txt  = '';
-      if(marc==='D'||marc==='14D'){
-        bg  = 'background:#e8f5e9;color:#1b5e20;font-weight:700';
-        txt = String(val.meiDA); // '2'
-      } else if(marc==='N'||marc==='14N'){
-        bg  = 'background:#e8eaf6;color:#1a237e;font-weight:700';
-        txt = String(val.meiDA); // '2'
-      } else if(marc==='D/N'){
-        bg  = 'background:#fff3e0;color:#e65100;font-weight:700';
-        txt = String(val.meiDA); // '3'
-      } else if(marc !== ''){
-        // FA, F, LP, EAP, A — exibe 0
-        bg  = 'background:#f5f5f5;color:#999';
-        txt = '0';
-      }
-      // Se marc === '' (sem marcação) — célula vazia
-      cells += '<td style="text-align:center;font-size:9px;padding:1px;border:1px solid #ddd;'+bg+'">'+txt+'</td>';
-    }
-    // Preenche dias além do fim do mês com traço
-    for(var d2=Math.min(ate,diasNoMes)+1; d2<=ate; d2++){
-      cells += '<td style="border:1px solid #ddd;background:#eeeeee;text-align:center;font-size:9px;color:#bbb">—</td>';
-    }
-    return cells;
-  }
-
-  // Calcula totais
-  function calcularTotais(pol, de, ate){
-    // de/ate definem o período (quinzena ou mês inteiro)
-    var inicio = de   || 1;
-    var fim    = ate  || diasNoMes;
+  function calcularTotais(pol){
     var meiDA=0, diasTrab=0;
-    for(var d=inicio; d<=fim; d++){
+    for(var d=1; d<=diasNoMes; d++){
       var marc = mapaMarcacoes[pol.id][d] || '';
       var val  = valorMarcacao(marc);
       meiDA    += val.meiDA;
@@ -1958,167 +1899,125 @@ function renderizarFrequencia(){
     return {meiDA:meiDA, diasTrab:diasTrab};
   }
 
-  // Renderiza tabela
-  var linhasAtend = '';
-  atendentes.forEach(function(pol, idx){
-    var totais = calcularTotais(pol);
-    var partes = pol.nome.split(' ');
-    var grad = partes[0] + ' ' + (partes[1]||'');
-    var re   = partes[2]||'';
-    var nome = partes.slice(3).join(' ');
-    var tot1 = calcularTotais(pol, 1, 15);
-    var totM = calcularTotais(pol, 1, diasNoMes);
-    linhasAtend += '<tr>'+
-      '<td style="text-align:center;font-size:10px;padding:3px;border:1px solid #ccc;font-weight:700">'+(idx+1)+'</td>'+
-      '<td style="font-size:9px;padding:3px;border:1px solid #ccc;white-space:nowrap">'+grad+'</td>'+
-      '<td style="font-size:9px;padding:3px;border:1px solid #ccc;text-align:center">'+re+'</td>'+
-      '<td style="font-size:10px;padding:3px;border:1px solid #ccc;white-space:nowrap">'+nome+'</td>'+
-      gerarCelulasDias(pol,1,15)+
-      '<td style="text-align:center;font-weight:700;font-size:10px;padding:3px;border:1px solid #ccc;background:#FFF0A0">'+tot1.meiDA+'</td>'+
-      '<td style="text-align:center;font-weight:700;font-size:10px;padding:3px;border:1px solid #ccc;background:#FFF0A0">'+tot1.diasTrab+'</td>'+
-      '</tr>';
-  });
-
-  var linhasAtend2 = '';
-  atendentes.forEach(function(pol, idx){
-    var totais = calcularTotais(pol);
-    var partes = pol.nome.split(' ');
-    var grad = partes[0] + ' ' + (partes[1]||'');
-    var re   = partes[2]||'';
-    var nome = partes.slice(3).join(' ');
-    var tot2  = calcularTotais(pol, 16, diasNoMes);
-    var totM2 = calcularTotais(pol, 1,  diasNoMes);
-    linhasAtend2 += '<tr>'+
-      '<td style="text-align:center;font-size:10px;padding:3px;border:1px solid #ccc;font-weight:700">'+(idx+1)+'</td>'+
-      '<td style="font-size:9px;padding:3px;border:1px solid #ccc;white-space:nowrap">'+grad+'</td>'+
-      '<td style="font-size:9px;padding:3px;border:1px solid #ccc;text-align:center">'+re+'</td>'+
-      '<td style="font-size:10px;padding:3px;border:1px solid #ccc;white-space:nowrap">'+nome+'</td>'+
-      gerarCelulasDias(pol,16,diasNoMes)+
-      '<td style="text-align:center;font-weight:700;font-size:10px;padding:3px;border:1px solid #ccc;background:#FFF0A0">'+tot2.meiDA+'</td>'+
-      '<td style="text-align:center;font-weight:700;font-size:10px;padding:3px;border:1px solid #ccc;background:#FFF0A0">'+tot2.diasTrab+'</td>'+
-      '<td style="text-align:center;font-weight:700;font-size:10px;padding:3px;border:1px solid #ccc;background:#FFE066">'+totM2.meiDA+'</td>'+
-      '<td style="text-align:center;font-weight:700;font-size:10px;padding:3px;border:1px solid #ccc;background:#FFE066">'+totM2.diasTrab+'</td>'+
-      '</tr>';
-  });
-
-  var cabDias1 = gerarCabecalhoDias(1,15);
-  var cabDias2 = gerarCabecalhoDias(16,diasNoMes);
-  var cabComum = '<th style="width:20px;text-align:center;font-size:9px;padding:2px;background:#1a3a5c;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">#</th>'+
-                 '<th style="width:80px;font-size:9px;padding:2px;background:#1a3a5c;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">Posto/Grad</th>'+
-                 '<th style="width:60px;font-size:9px;padding:2px;background:#1a3a5c;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">RE</th>'+
-                 '<th style="width:100px;font-size:9px;padding:2px;background:#1a3a5c;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">Nome</th>';
-  var cabTotal1 = '<th style="font-size:9px;padding:2px;background:#F5C400!important;color:#111;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;border:1px solid #ccc">½ DA</th>'+
-                  '<th style="font-size:9px;padding:2px;background:#F5C400!important;color:#111;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;border:1px solid #ccc">Dias<br/>Trab</th>';
-  var cabTotal2 = '<th style="font-size:9px;padding:2px;background:#F5C400!important;color:#111;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;border:1px solid #ccc">½ DA<br/><span style=\"font-weight:400;font-size:8px\">Quinz.</span></th>'+
-                  '<th style="font-size:9px;padding:2px;background:#F5C400!important;color:#111;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;border:1px solid #ccc">Dias<br/>Trab<br/><span style=\"font-weight:400;font-size:8px\">Quinz.</span></th>'+
-                  '<th style="font-size:9px;padding:2px;background:#D4A900!important;color:#111;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;border:1px solid #ccc">½ DA<br/><span style=\"font-weight:400;font-size:8px\">Mês</span></th>'+
-                  '<th style="font-size:9px;padding:2px;background:#D4A900!important;color:#111;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;border:1px solid #ccc">Dias<br/>Trab<br/><span style=\"font-weight:400;font-size:8px\">Mês</span></th>';
-
-  var cabInst = '<table style="width:100%;border-collapse:collapse;background:#F5C400;margin-bottom:4px;border:2px solid #111">'+
+  // Cabeçalho institucional — table pura sem variáveis CSS
+  var cabInst = '<table style="width:100%;border-collapse:collapse;background:#F5C400;margin-bottom:4px;border:2px solid #111;-webkit-print-color-adjust:exact;print-color-adjust:exact">'+
     '<tr>'+
     '<td style="background:#F5C400;color:#111;font-size:10px;font-weight:700;padding:6px 10px;width:20%;-webkit-print-color-adjust:exact;print-color-adjust:exact">POLÍCIA MILITAR<br/>DO ESTADO DE SÃO PAULO</td>'+
     '<td style="background:#F5C400;color:#111;font-size:11px;font-weight:700;padding:6px 10px;text-align:center;width:40%;-webkit-print-color-adjust:exact;print-color-adjust:exact">CONTROLE DE FREQUÊNCIA<br/><span style="font-size:10px;font-weight:400">OPM: 3º BPRV | Cód: 620030000</span></td>'+
     '<td style="background:#F5C400;color:#111;font-size:11px;font-weight:700;padding:6px 10px;text-align:center;width:25%;-webkit-print-color-adjust:exact;print-color-adjust:exact">MÊS: '+MESES_NOME[mes].toUpperCase()+'<br/>ANO: '+ano+'</td>'+
-    '<td style="background:#F5C400;color:#111;font-size:10px;padding:6px 10px;text-align:center;width:15%;-webkit-print-color-adjust:exact;print-color-adjust:exact">Pág. 1 / 2</td>'+
+    '<td style="background:#F5C400;color:#111;font-size:10px;padding:6px 10px;text-align:center;width:15%;-webkit-print-color-adjust:exact;print-color-adjust:exact">3º BPRv — EM<br/>Sala de Operações</td>'+
     '</tr></table>';
 
-  var cabInst2 = cabInst.replace('Pág. 1 / 2','Pág. 2 / 2');
+  // Cabeçalho das colunas de dias
+  var cabDias = '';
+  for(var d=1; d<=diasNoMes; d++){
+    cabDias += '<th style="width:18px;text-align:center;font-size:8px;padding:1px;background:#1a3a5c;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">'+d+'</th>';
+  }
+
+  var cabComum = '<th style="width:20px;text-align:center;font-size:9px;padding:2px;background:#1a3a5c;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">#</th>'+
+    '<th style="width:70px;font-size:9px;padding:2px;background:#1a3a5c;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">Posto/Grad</th>'+
+    '<th style="width:55px;font-size:9px;padding:2px;background:#1a3a5c;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">RE</th>'+
+    '<th style="width:90px;font-size:9px;padding:2px;background:#1a3a5c;color:#fff;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">Nome</th>';
+
+  var cabTotal = '<th style="font-size:9px;padding:2px;background:#F5C400;color:#111;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">½ DA</th>'+
+    '<th style="font-size:9px;padding:2px;background:#F5C400;color:#111;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact">Dias<br/>Trab</th>';
+
+  // Linhas dos atendentes
+  var linhas = '';
+  atendentes.forEach(function(pol, idx){
+    var totais = calcularTotais(pol);
+    var partes = pol.nome.split(' ');
+    var grad = partes[0] + ' ' + (partes[1]||'');
+    var re   = partes[2]||'';
+    var nome = partes.slice(3).join(' ');
+
+    var celulasDias = '';
+    for(var d=1; d<=diasNoMes; d++){
+      var marc = mapaMarcacoes[pol.id][d] || '';
+      var val  = valorMarcacao(marc);
+      var bg = '', txt = '';
+      if(marc==='D'||marc==='14D'){ bg='background:#e8f5e9;color:#1b5e20;font-weight:700'; txt='2'; }
+      else if(marc==='N'||marc==='14N'){ bg='background:#e8eaf6;color:#1a237e;font-weight:700'; txt='2'; }
+      else if(marc==='D/N'){ bg='background:#fff3e0;color:#e65100;font-weight:700'; txt='3'; }
+      else if(marc !== ''){ bg='background:#f5f5f5;color:#999'; txt='0'; }
+      celulasDias += '<td style="text-align:center;font-size:8px;padding:1px;border:1px solid #ddd;'+bg+'">'+txt+'</td>';
+    }
+
+    linhas += '<tr>'+
+      '<td style="text-align:center;font-size:9px;padding:2px;border:1px solid #ccc;font-weight:700">'+(idx+1)+'</td>'+
+      '<td style="font-size:9px;padding:2px;border:1px solid #ccc;white-space:nowrap">'+grad+'</td>'+
+      '<td style="font-size:9px;padding:2px;border:1px solid #ccc;text-align:center">'+re+'</td>'+
+      '<td style="font-size:9px;padding:2px;border:1px solid #ccc;white-space:nowrap">'+nome+'</td>'+
+      celulasDias+
+      '<td style="text-align:center;font-weight:700;font-size:10px;padding:2px;border:1px solid #ccc;background:#FFF0A0;-webkit-print-color-adjust:exact;print-color-adjust:exact">'+totais.meiDA+'</td>'+
+      '<td style="text-align:center;font-weight:700;font-size:10px;padding:2px;border:1px solid #ccc;background:#FFF0A0;-webkit-print-color-adjust:exact;print-color-adjust:exact">'+totais.diasTrab+'</td>'+
+      '</tr>';
+  });
 
   var legenda = '<div style="font-size:9px;padding:4px 8px;background:#f9f9f9;border:1px solid #ddd;margin-top:4px">'+
-    '<strong>Legenda:</strong> '+
-    '<span style="margin:0 4px"><strong>D, N ou D/N</strong> = Dias trabalhados &nbsp;|&nbsp; <strong>½ DA:</strong> D ou N = 2 &nbsp;|&nbsp; D/N = 3 &nbsp;|&nbsp; Diferente de D, N ou D/N = valor <strong>zero</strong>, não soma.</span>'+
+    '<strong>Legenda:</strong> <span style="margin:0 4px"><strong>D, N ou D/N</strong> = Dias trabalhados &nbsp;|&nbsp; <strong>½ DA:</strong> D ou N = 2 &nbsp;|&nbsp; D/N = 3 &nbsp;|&nbsp; Diferente de D, N ou D/N = valor <strong>zero</strong>, não soma.</span>'+
     '</div>';
 
   var rodape = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:16px;font-size:10px;text-align:center">'+
-    '<div>'+
-      '<div style="font-size:9px;color:#888;margin-bottom:2px">ELABORADOR</div>'+
-      '<input id="freqElab" type="text" style="width:100%;border:none;border-bottom:1px solid #000;text-align:center;font-size:10px;padding:2px;outline:none" placeholder="Nome / Graduação"/>'+
-    '</div>'+
-    '<div>'+
-      '<div style="font-size:9px;color:#888;margin-bottom:2px">CONFERÊNCIA</div>'+
-      '<input id="freqConf" type="text" style="width:100%;border:none;border-bottom:1px solid #000;text-align:center;font-size:10px;padding:2px;outline:none" placeholder="Nome / Posto"/>'+
-    '</div>'+
-    '<div>'+
-      '<div style="font-size:9px;color:#888;margin-bottom:2px">DIRETOR / CMT / CHEFE</div>'+
-      '<input id="freqDir" type="text" style="width:100%;border:none;border-bottom:1px solid #000;text-align:center;font-size:10px;padding:2px;outline:none" placeholder="Nome / Posto"/>'+
-    '</div>'+
+    '<div><div style="font-size:9px;color:#888;margin-bottom:2px">ELABORADOR</div>'+
+    '<input id="freqElab" type="text" style="width:100%;border:none;border-bottom:1px solid #000;text-align:center;font-size:10px;padding:2px;outline:none" placeholder="Nome / Graduação"/></div>'+
+    '<div><div style="font-size:9px;color:#888;margin-bottom:2px">CONFERÊNCIA</div>'+
+    '<input id="freqConf" type="text" style="width:100%;border:none;border-bottom:1px solid #000;text-align:center;font-size:10px;padding:2px;outline:none" placeholder="Nome / Posto"/></div>'+
+    '<div><div style="font-size:9px;color:#888;margin-bottom:2px">DIRETOR / CMT / CHEFE</div>'+
+    '<input id="freqDir" type="text" style="width:100%;border:none;border-bottom:1px solid #000;text-align:center;font-size:10px;padding:2px;outline:none" placeholder="Nome / Posto"/></div>'+
     '</div>';
 
-  var html1 = cabInst+
-    '<table style="width:100%;border-collapse:collapse;font-size:10px">'+
-    '<thead><tr>'+cabComum+cabDias1+cabTotal1+'</tr></thead>'+
-    '<tbody>'+linhasAtend+'</tbody></table>'+
-    legenda;
+  container.innerHTML = cabInst +
+    '<table style="width:100%;border-collapse:collapse;font-size:9px">'+
+    '<thead><tr>'+cabComum+cabDias+cabTotal+'</tr></thead>'+
+    '<tbody>'+linhas+'</tbody></table>'+
+    legenda + rodape;
 
-  var html2 = '<hr style="margin:20px 0;border:2px dashed #ccc"/>'+
-    cabInst2+
-    '<table style="width:100%;border-collapse:collapse;font-size:10px">'+
-    '<thead><tr>'+cabComum+cabDias2+cabTotal2+'</tr></thead>'+
-    '<tbody>'+linhasAtend2+'</tbody></table>'+
-    legenda+rodape;
-
-  container.innerHTML = html1 + html2;
-
-  // Garante que os campos do rodapé sejam editáveis após inserção no DOM
+  // Garante campos editáveis
   setTimeout(function(){
     ['freqElab','freqConf','freqDir'].forEach(function(id){
       var el = document.getElementById(id);
-      if(el){
-        el.removeAttribute('readonly');
-        el.style.pointerEvents = 'auto';
-        el.style.webkitUserSelect = 'text';
-        el.style.userSelect = 'text';
-        el.style.cursor = 'text';
-      }
+      if(el){ el.removeAttribute('readonly'); el.style.pointerEvents='auto'; el.style.cursor='text'; }
     });
   }, 100);
 }
+
 
 function exportarFrequenciaPDF(){
   var mesEl = document.getElementById('freqMes');
   var anoEl = document.getElementById('freqAno');
   if(!mesEl || !anoEl) return;
-  var mes  = parseInt(mesEl.value);
-  var ano  = parseInt(anoEl.value);
+  var mes = parseInt(mesEl.value);
+  var ano = parseInt(anoEl.value);
   var cont = document.getElementById('freqContainer');
   if(!cont || !cont.innerHTML.trim()){ toast('Gere o controle antes de exportar.','error'); return; }
 
-  // Captura os valores digitados nos campos do rodapé
-  var elab = document.getElementById('freqElab') ? document.getElementById('freqElab').value : '';
-  var conf = document.getElementById('freqConf') ? document.getElementById('freqConf').value : '';
-  var dir  = document.getElementById('freqDir')  ? document.getElementById('freqDir').value  : '';
-
-  // Clona o conteúdo e substitui os inputs pelos valores para impressão
+  // Captura valores dos campos e substitui inputs por texto
   var contClone = cont.cloneNode(true);
   contClone.querySelectorAll('input').forEach(function(inp){
     var span = document.createElement('span');
     span.textContent = inp.value || '';
-    span.style.cssText = 'display:block;font-weight:700;font-size:10px;text-align:center;border-bottom:1px solid #000;padding:2px';
+    span.style.cssText = 'display:block;font-weight:700;font-size:10px;text-align:center;border-bottom:1px solid #000;padding:2px;min-width:150px';
     inp.parentNode.replaceChild(span, inp);
   });
-  var conteudo = contClone.innerHTML;
 
+  var titulo = MESES_NOME[mes] + '_' + ano;
   var css = [
-    'body{font-family:Arial,sans-serif;font-size:10px;margin:8mm}',
     '*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;box-sizing:border-box}',
-    '*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}',
-    'div[style]{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}',
+    'body{font-family:Arial,sans-serif;font-size:9px;margin:4mm}',
     'table{border-collapse:collapse;width:100%}',
-    'th,td{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}',
-    '.freq-d{background:#e8f5e9!important;color:#1b5e20!important}',
-    '.freq-n{background:#e8eaf6!important;color:#1a237e!important}',
-    'th,td{border:1px solid #ccc;padding:2px 3px}',
-    '@page{size:A4 landscape;margin:8mm}',
+    'th,td{border:1px solid #ccc;padding:1px 2px}',
+    '@page{size:A4 landscape;margin:6mm}',
     '@media print{body{margin:0}}'
   ].join('');
 
   var docHTML = [
     '<'+'!DOCTYPE html><'+'html><'+'head>',
     '<meta charset="UTF-8"/>',
-    '<title>Controle de Frequência — '+MESES_NOME[mes]+' '+ano+'<'+'/title>',
+    '<title>Controle de Frequência — '+titulo+'<'+'/title>',
     '<style>'+css+'<'+'/style>',
     '<'+'/head><'+'body>',
-    conteudo,
+    contClone.innerHTML,
     '<script>window.onload=function(){window.print()};<'+'/script>',
     '<'+'/body><'+'/html>'
   ].join('');
@@ -2127,13 +2026,14 @@ function exportarFrequenciaPDF(){
   var url  = URL.createObjectURL(blob);
   var a    = document.createElement('a');
   a.href = url;
-  a.download = 'FreqControl_'+MESES_NOME[mes]+'_'+ano+'.html';
+  a.download = 'FreqControl_'+titulo+'.html';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
-  toast('Arquivo gerado! Abra no navegador e use Ctrl+P para imprimir/salvar PDF.','success');
+  toast('Arquivo gerado! Abra no navegador e use Ctrl+P para salvar como PDF.','success');
 }
+
 
 // ═══════════════════════════════════════════════════════
 // TOAST
