@@ -222,7 +222,7 @@ body{font-family:var(--fonte-corpo);background:var(--cinza-fundo);color:var(--te
       <p id="confirmMensagem" style="font-size:14px;line-height:1.5;color:var(--texto-esc)"></p>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" id="confirmBtnNao" onclick="fecharModal('modalConfirm')">Cancelar</button>
+      <button class="btn btn-secondary" id="confirmBtnNao">Cancelar</button>
       <button class="btn btn-danger"    id="confirmBtnSim">Confirmar</button>
     </div>
   </div>
@@ -261,7 +261,7 @@ body{font-family:var(--fonte-corpo);background:var(--cinza-fundo);color:var(--te
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="fecharModal('modalCadastro')">Cancelar</button>
-      <button class="btn btn-primary" id="btnSalvarCadastro" onclick="salvarCadastro()">Salvar Cadastro</button>
+      <button class="btn btn-primary" id="btnSalvarCadastro">Salvar Cadastro</button>
     </div>
   </div>
 </div>
@@ -800,10 +800,12 @@ function renderizarEscala(){
 
   const dataBase = new Date(sem.dataInicio+'T00:00:00');
   const dias = Array.from({length:7},(_,i)=>{const d=new Date(dataBase);d.setDate(d.getDate()+i);return d;});
-  // Inclui atendentes com marcação nesta semana (mesmo inativos) + ativos
+  // Ativos sempre aparecem
+  // Inativos só aparecem em semanas de meses já encerrados (fechadas)
   const idsComMarcacao = Object.keys(sem.marcacoes||{});
+  const semBloqueada   = _semBloqueada(sem);
   const atendentes = db.policiais.filter(p=>
-    p.tipo==='ATENDENTE' && (p.ativo || idsComMarcacao.includes(p.id))
+    p.tipo==='ATENDENTE' && (p.ativo || (semBloqueada && idsComMarcacao.includes(p.id)))
   );
 
   const ofSobre  = db.policiais.find(p=>p.id===sem.oficSobre)  || {nome:'—',tel:''};
@@ -1773,7 +1775,15 @@ function renderizarFrequencia(){
   if(!container) return;
 
   var diasNoMes = new Date(ano, mes+1, 0).getDate();
-  var atendentes = db.policiais.filter(function(p){ return p.tipo==='ATENDENTE' && p.ativo; });
+  // Ativos sempre aparecem; inativos só em meses já encerrados
+  var hoje = new Date();
+  var mesFechado = (ano < hoje.getFullYear()) || (ano === hoje.getFullYear() && mes < hoje.getMonth());
+  var atendentes = db.policiais.filter(function(p){
+    if(p.tipo !== 'ATENDENTE') return false;
+    if(p.ativo) return true;
+    // Inativo: só aparece se o mês selecionado for anterior ao atual
+    return mesFechado;
+  });
 
   // Monta mapa: polId → {dia: marcacao}
   var mapaMarcacoes = {};
