@@ -581,7 +581,7 @@ var FB_PATH      = '/escala_dados.json';
 var _fbSalvando  = false;
 var _fbFila      = false;
 
-function _fbUrl(){ return FB_DB_URL + FB_PATH + '?auth=' + FB_API_KEY; }
+function _fbUrl(){ return FB_DB_URL + FB_PATH; }
 
 function salvarDB(){
   // Cache local imediato
@@ -592,7 +592,7 @@ function salvarDB(){
   clearTimeout(salvarDB._t);
   salvarDB._t = setTimeout(function(){
     _fbSalvando = true;
-    fetch(FB_DB_URL + FB_PATH + '?auth=' + FB_API_KEY, {
+    fetch(FB_DB_URL + FB_PATH, {
       method: 'PUT',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(db)
@@ -609,9 +609,26 @@ function salvarDB(){
   }, 2000);
 }
 
+// Salva imediatamente, sem debounce (usado ao fechar a página)
+function _fbFlush(){
+  try{
+    clearTimeout(salvarDB._t);
+    var url = FB_DB_URL + FB_PATH;
+    var body = JSON.stringify(db);
+    // keepalive garante o envio mesmo com a página fechando
+    fetch(url, { method:'PUT', headers:{'Content-Type':'application/json'}, body: body, keepalive: true });
+  }catch(e){ /* silencioso */ }
+}
+
+// Dispara o flush quando a aba é ocultada ou fechada
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState === 'hidden') _fbFlush();
+});
+window.addEventListener('pagehide', _fbFlush);
+
 function carregarDB(){
   // Carrega do Firebase
-  fetch(FB_DB_URL + FB_PATH + '?auth=' + FB_API_KEY)
+  fetch(FB_DB_URL + FB_PATH)
   .then(function(r){ return r.json(); })
   .then(function(data){
     if(!data || data.semanas === undefined) return;
