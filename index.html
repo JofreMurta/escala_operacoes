@@ -253,7 +253,6 @@ body{font-family:var(--fonte-corpo);background:var(--cinza-fundo);color:var(--te
           <select id="cadTipo">
             <option value="ATENDENTE">Atendente</option>
             <option value="OF_SOBREAVISO">Oficial Sobreaviso</option>
-            <option value="OF_SUPERVISOR">Oficial Supervisor</option>
             <option value="OF_PERMANENCIA">Oficial Permanência</option>
           </select>
         </div>
@@ -314,12 +313,7 @@ body{font-family:var(--fonte-corpo);background:var(--cinza-fundo);color:var(--te
           <select id="gsOficSobre"></select>
         </div>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Oficial Supervisor</label>
-          <select id="gsOficSuperv"></select>
-        </div>
-      </div>
+
       <div class="form-row">
         <div class="form-group">
           <label>Oficial de Permanência</label>
@@ -362,12 +356,7 @@ body{font-family:var(--fonte-corpo);background:var(--cinza-fundo);color:var(--te
           <select id="retOficSobre"></select>
         </div>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Oficial Supervisor</label>
-          <select id="retOficSuperv"></select>
-        </div>
-      </div>
+
       <div class="form-row">
         <div class="form-group">
           <label>Oficial de Permanência</label>
@@ -435,9 +424,7 @@ body{font-family:var(--fonte-corpo);background:var(--cinza-fundo);color:var(--te
       <button class="sb-btn active" onclick="mostrarAba('escala',this)">
         <span class="ic">📅</span> Escala Semanal
       </button>
-      <button class="sb-btn" onclick="mostrarAba('cronograma',this)">
-        <span class="ic">📋</span> Cronograma Oficiais
-      </button>
+      
       <button class="sb-btn" onclick="mostrarAba('folgas',this)">
         <span class="ic">📊</span> Controle de Folgas
       </button>
@@ -458,12 +445,8 @@ body{font-family:var(--fonte-corpo);background:var(--cinza-fundo);color:var(--te
       <button class="sb-btn" onclick="imprimirEscala()">
         <span class="ic">🖨</span> Imprimir / PDF
       </button>
-      <button class="sb-btn" onclick="exportarJSON()">
-        <span class="ic">💾</span> Exportar Dados
-      </button>
-      <button class="sb-btn" onclick="importarJSON()">
-        <span class="ic">📂</span> Importar Dados
-      </button>
+
+
     </div>
     <div class="sb-footer">
       Regime 12×24 · 12×48<br/>
@@ -503,17 +486,6 @@ body{font-family:var(--fonte-corpo);background:var(--cinza-fundo);color:var(--te
       <!-- ════════════════════════════════════════
            ABA: CRONOGRAMA OFICIAIS
       ════════════════════════════════════════ -->
-      <div id="aba-cronograma" style="display:none">
-        <div class="card">
-          <div class="card-header">
-            <h2>Cronograma de Oficiais — 3º BPRv · EM</h2>
-          </div>
-          <div class="card-body">
-            <div id="cronogramaContainer"></div>
-          </div>
-        </div>
-      </div>
-
       <!-- ════════════════════════════════════════
            ABA: CONTROLE DE FOLGAS
       ════════════════════════════════════════ -->
@@ -554,7 +526,7 @@ body{font-family:var(--fonte-corpo);background:var(--cinza-fundo);color:var(--te
               <h2>Oficiais</h2>
               <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">
                 <button class="btn btn-primary btn-sm" onclick="abrirModalCadastro('OF_SOBREAVISO')">+ Sobreaviso</button>
-                <button class="btn btn-primary btn-sm" onclick="abrirModalCadastro('OF_SUPERVISOR')">+ Supervisor</button>
+                
                 <button class="btn btn-primary btn-sm" onclick="abrirModalCadastro('OF_PERMANENCIA')">+ Permanência</button>
               </div>
             </div>
@@ -679,7 +651,6 @@ function _renderizarTudo(){
   });
   if(db.semanas.length === 0){ criarSemanaDemo(); }
   renderizarEscala();
-  renderizarCronograma();
   renderizarCadastros();
   atualizarFolgaGrid();
 }
@@ -711,7 +682,6 @@ function _registrarListeners(){
   on('da_22', function(){ calcularFolgas(); });
   on('da_23', function(){ abrirModalCadastro('ATENDENTE'); });
   on('da_24', function(){ abrirModalCadastro('OF_SOBREAVISO'); });
-  on('da_25', function(){ abrirModalCadastro('OF_SUPERVISOR'); });
   on('da_26', function(){ abrirModalCadastro('OF_PERMANENCIA'); });
   on('btnSalvarCadastro', function(){ salvarCadastro(); });
   on('confirmBtnNao',     function(){ fecharModal('modalConfirm'); });
@@ -729,7 +699,7 @@ function criarSemanaDemo(){
   db.semanaAtual = 0;
 }
 
-function criarObjSemana(dataInicio, idSobre, idSuperv, idPerm, obs1, obs2, obs3){
+function criarObjSemana(dataInicio, idSobre, idPerm, obs1, obs2, obs3){
   const atendentes = db.policiais.filter(p=>p.tipo==='ATENDENTE'&&p.ativo);
   const marcacoes = {};
   atendentes.forEach(p=>{
@@ -739,7 +709,6 @@ function criarObjSemana(dataInicio, idSobre, idSuperv, idPerm, obs1, obs2, obs3)
     id: 'sem_'+Date.now(),
     dataInicio: dataInicio instanceof Date ? dataInicio.toISOString().split('T')[0] : dataInicio,
     oficSobre: idSobre,
-    oficSuperv: idSuperv,
     oficPerm: idPerm,
     obs1, obs2, obs3,
     marcacoes
@@ -764,7 +733,6 @@ function mostrarAba(id, btn){
   document.getElementById('topbarTitulo').textContent = TITULOS[id]||id;
   if(id==='folgas') atualizarFolgaGrid();
   if(id==='cadastros') renderizarCadastros();
-  if(id==='cronograma') renderizarCronograma();
   if(id==='frequencia'){ _initFreqSelects(); renderizarFrequencia(); }
 }
 
@@ -809,7 +777,6 @@ function renderizarEscala(){
   );
 
   const ofSobre  = db.policiais.find(p=>p.id===sem.oficSobre)  || {nome:'—',tel:''};
-  const ofSuperv = db.policiais.find(p=>p.id===sem.oficSuperv) || {nome:'—',tel:''};
   const ofPerm   = db.policiais.find(p=>p.id===sem.oficPerm)   || {nome:'—',tel:''};
 
   // Período sobreaviso
@@ -879,21 +846,14 @@ function renderizarEscala(){
       <div class="bloco-of-nome">${ofSobre.nome}</div>
       <div class="bloco-of-tel">${ofSobre.tel||''}</div>
     </div>
-    <div class="bloco-of">
-      <div class="bloco-of-titulo">Oficial Supervisor</div>
-      <div class="bloco-of-nome">${ofSuperv.nome}</div>
-      <div class="bloco-of-tel">${ofSuperv.tel||''}</div>
-    </div>
+
     <div class="bloco-of">
       <div class="bloco-of-titulo">Oficial de Permanência</div>
       <div class="bloco-of-nome">${ofPerm.nome}</div>
       <div class="bloco-of-tel">${ofPerm.tel||''}</div>
     </div>
   </div>
-  <div class="bloco-cias">
-    <strong>Oficial de Permanência Semanal — Cias Rv:</strong>
-    O Atendente, no período matutino, deverá confirmar o Oficial de Permanência de cada Cia Rv, com anotação no livro de passagem de serviço.
-  </div>
+
 
   <!-- OBSERVAÇÕES -->
   <div class="bloco-obs">
@@ -1170,7 +1130,6 @@ function abrirModalGerarSemana(){
   document.getElementById('gsDataInicio').value = dom.toISOString().split('T')[0];
 
   _populatSelect('gsOficSobre','OF_SOBREAVISO');
-  _populatSelect('gsOficSuperv','OF_SUPERVISOR');
   _populatSelect('gsOficPerm','OF_PERMANENCIA');
   document.getElementById('gsObs1').value='';
   document.getElementById('gsObs2').value='';
@@ -1188,7 +1147,6 @@ function _populatSelect(elId, tipo){
 function confirmarGerarSemana(){
   const dataInicio = document.getElementById('gsDataInicio').value;
   const idSobre  = document.getElementById('gsOficSobre').value;
-  const idSuperv = document.getElementById('gsOficSuperv').value;
   const idPerm   = document.getElementById('gsOficPerm').value;
   const obs1 = document.getElementById('gsObs1').value;
   const obs2 = document.getElementById('gsObs2').value;
@@ -1198,7 +1156,7 @@ function confirmarGerarSemana(){
 
   // Verifica se já existe semana com essa data
   const existIdx = db.semanas.findIndex(s=>s.dataInicio===dataInicio);
-  const sem = criarObjSemana(dataInicio, idSobre, idSuperv, idPerm, obs1, obs2, obs3);
+  const sem = criarObjSemana(dataInicio, idSobre, idPerm, obs1, obs2, obs3);
 
   if(existIdx>=0){
     // Preserva marcações existentes
@@ -1354,7 +1312,7 @@ function reativarCadastro(id){
 function _itemCadHTML(p){
   const TIPO_LABEL = {
     ATENDENTE:'Atend.', OF_SOBREAVISO:'Sobreaviso',
-    OF_SUPERVISOR:'Supervisor', OF_PERMANENCIA:'Permanência'
+    OF_PERMANENCIA:'Permanência'
   };
   const badge = p.tipo === 'ATENDENTE' ? 'badge-atend' : 'badge-ofic';
   const label = TIPO_LABEL[p.tipo] || p.tipo;
@@ -1380,7 +1338,6 @@ function renderizarCadastros(){
   // Oficiais agrupados por subtipo
   const subtipos = [
     { tipo:'OF_SOBREAVISO',  label:'Oficial Superior de Sobreaviso' },
-    { tipo:'OF_SUPERVISOR',  label:'Oficial Supervisor'             },
     { tipo:'OF_PERMANENCIA', label:'Oficial de Permanência'         }
   ];
   let htmlOf = '';
@@ -1442,60 +1399,7 @@ function removerStatus(cod){
 // ═══════════════════════════════════════════════════════
 // CRONOGRAMA OFICIAIS
 // ═══════════════════════════════════════════════════════
-function renderizarCronograma(){
-  const el = document.getElementById('cronogramaContainer');
-  if(!el) return;
 
-  const tipos = [
-    {tipo:'OF_SOBREAVISO', label:'Oficial Superior de Sobreaviso'},
-    {tipo:'OF_SUPERVISOR', label:'Oficial Supervisor'},
-    {tipo:'OF_PERMANENCIA',label:'Oficial de Permanência'}
-  ];
-
-  let html = '<table class="cronograma-table"><thead><tr>';
-  html += '<th style="width:220px">Oficial</th><th style="width:140px">Telefone</th><th>Períodos de Sobreaviso</th>';
-  html += '</tr></thead><tbody>';
-
-  tipos.forEach(({tipo, label})=>{
-    const ofs = db.policiais.filter(p=>p.tipo===tipo&&p.ativo);
-    html += `<tr><td colspan="3" class="secao-titulo">${label}</td></tr>`;
-    if(ofs.length===0){
-      html += `<tr><td colspan="3" class="empty-state" style="padding:12px">Nenhum oficial cadastrado.</td></tr>`;
-    } else {
-      ofs.forEach(of=>{
-        // Períodos = semanas onde este oficial foi designado
-        const periodos = db.semanas
-          .filter(s=>s.oficSobre===of.id||s.oficSuperv===of.id||s.oficPerm===of.id)
-          .map(s=>`<span class="periodo-tag">${nomeSemana(s.dataInicio)}</span>`).join('');
-        html += `<tr>
-          <td style="font-weight:600">${of.nome}</td>
-          <td style="color:#5a6b7a">${of.tel||'—'}</td>
-          <td>${periodos||'<span style="color:#aaa;font-size:11px">Sem períodos registrados</span>'}</td>
-        </tr>`;
-      });
-    }
-  });
-
-  html += '</tbody></table>';
-  el.innerHTML = html;
-}
-
-// ═══════════════════════════════════════════════════════
-// EXPORTAR / IMPORTAR
-// ═══════════════════════════════════════════════════════
-function exportarJSON(){
-  const blob = new Blob([JSON.stringify(db, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `EscalaOps_${new Date().toISOString().split('T')[0]}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  toast('Dados exportados com sucesso.','success');
-}
-function importarJSON(){
-  document.getElementById('importInput').click();
-}
 function processarImport(e){
   const file = e.target.files[0];
   if(!file) return;
@@ -1693,12 +1597,10 @@ function abrirModalRetificarSobre(semId){
     if(db.semanas[i].id===semId){ sem=db.semanas[i]; break; }
   }
   _populatSelect('retOficSobre',  'OF_SOBREAVISO');
-  _populatSelect('retOficSuperv', 'OF_SUPERVISOR');
   _populatSelect('retOficPerm',   'OF_PERMANENCIA');
   // Pré-seleciona os oficiais atuais
   if(sem){
     document.getElementById('retOficSobre').value  = sem.oficSobre  || '';
-    document.getElementById('retOficSuperv').value = sem.oficSuperv || '';
     document.getElementById('retOficPerm').value   = sem.oficPerm   || '';
   }
   abrirModal('modalRetificarSobre');
@@ -1707,7 +1609,6 @@ function abrirModalRetificarSobre(semId){
 function confirmarRetificarSobre(){
   var semId   = document.getElementById('retSemId').value;
   var idSobre = document.getElementById('retOficSobre').value;
-  var idSuperv= document.getElementById('retOficSuperv').value;
   var idPerm  = document.getElementById('retOficPerm').value;
   var sem = null;
   for(var i=0;i<db.semanas.length;i++){
@@ -1720,7 +1621,6 @@ function confirmarRetificarSobre(){
     return;
   }
   sem.oficSobre  = idSobre;
-  sem.oficSuperv = idSuperv;
   sem.oficPerm   = idPerm;
   salvarDB();
   fecharModal('modalRetificarSobre');
@@ -1775,14 +1675,33 @@ function renderizarFrequencia(){
   if(!container) return;
 
   var diasNoMes = new Date(ano, mes+1, 0).getDate();
-  // Ativos sempre aparecem; inativos só em meses já encerrados
+  // Ativos sempre aparecem; inativos só se tiverem marcações no mês consultado
   var hoje = new Date();
   var mesFechado = (ano < hoje.getFullYear()) || (ano === hoje.getFullYear() && mes < hoje.getMonth());
+
+  // Monta lista de IDs que têm marcação no mês selecionado
+  var idsComMarcacaoNoMes = {};
+  db.semanas.forEach(function(sem){
+    var dataBase = new Date(sem.dataInicio+'T00:00:00');
+    for(var c=0; c<7; c++){
+      var dataCell = new Date(dataBase);
+      dataCell.setDate(dataCell.getDate()+c);
+      if(dataCell.getMonth() !== mes || dataCell.getFullYear() !== ano) continue;
+      if(sem.marcacoes){
+        Object.keys(sem.marcacoes).forEach(function(polId){
+          if(sem.marcacoes[polId] && sem.marcacoes[polId][c]){
+            idsComMarcacaoNoMes[polId] = true;
+          }
+        });
+      }
+    }
+  });
+
   var atendentes = db.policiais.filter(function(p){
     if(p.tipo !== 'ATENDENTE') return false;
     if(p.ativo) return true;
-    // Inativo: só aparece se o mês selecionado for anterior ao atual
-    return mesFechado;
+    // Inativo: só aparece se tiver marcação no mês consultado
+    return mesFechado && idsComMarcacaoNoMes[p.id];
   });
 
   // Monta mapa: polId → {dia: marcacao}
